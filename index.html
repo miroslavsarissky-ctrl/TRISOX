@@ -963,37 +963,6 @@ function renderFallbackFuelViz(mount) {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  layers.forEach((l, idx) => {
-    const phiStart = idx === 0 ? 0.42 : 0.55;
-    const phiLength = Math.PI * 1.58;
-    const geom = new THREE.SphereGeometry(l.r, 96, 96, phiStart, phiLength);
-    const mat = new THREE.MeshPhysicalMaterial({
-      color: l.color,
-      metalness: l.metalness,
-      roughness: l.roughness,
-      clearcoat: 1,
-      clearcoatRoughness: 0.14,
-      sheen: 0.35,
-      sheenColor: new THREE.Color(0xdbe4ed),
-      side: THREE.DoubleSide
-    });
-    const mesh = new THREE.Mesh(geom, mat);
-    particle.add(mesh);
-  });
-
-  const halo = new THREE.Mesh(
-    new THREE.TorusGeometry(1.02, 0.012, 20, 140),
-    new THREE.MeshBasicMaterial({ color: 0x21eaed, transparent: true, opacity: 0.35 })
-  );
-  halo.rotation.x = Math.PI * 0.5;
-  particle.add(halo);
-
-  let yaw = 0.65;
-  let pitch = -0.22;
-  let dragging = false;
-  let lx = 0;
-  let ly = 0;
-
   function resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const w = Math.max(1, mount.clientWidth);
@@ -1004,11 +973,11 @@ function renderFallbackFuelViz(mount) {
   }
 
   const rings = [
-    { r: 0.78, c: '#1d242a', a: 1 },
-    { r: 0.64, c: '#b7c3ce', a: 0.95 },
-    { r: 0.52, c: '#8c97a2', a: 0.95 },
-    { r: 0.40, c: '#67737f', a: 0.95 },
-    { r: 0.28, c: '#f2f4f8', a: 1 }
+    { r: 0.78, c: '#202830', edge: 'rgba(210,220,232,0.22)' },
+    { r: 0.64, c: '#bfc9d4', edge: 'rgba(240,245,255,0.35)' },
+    { r: 0.52, c: '#8f9aa6', edge: 'rgba(220,230,240,0.28)' },
+    { r: 0.40, c: '#67737f', edge: 'rgba(210,220,235,0.24)' },
+    { r: 0.28, c: '#f2f4f8', edge: 'rgba(255,255,255,0.40)' }
   ];
 
   function draw(t) {
@@ -1033,12 +1002,15 @@ function renderFallbackFuelViz(mount) {
       ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2);
       const g = ctx.createRadialGradient(cx-rx*0.35, cy-ry*0.36, 1, cx, cy, rx);
       g.addColorStop(0, ring.c + 'ff');
-      g.addColorStop(1, ring.c + (i===0 ? '66':'2e'));
+      g.addColorStop(1, ring.c + (i===0 ? '8f':'42'));
       ctx.fillStyle = g;
       ctx.fill();
+      ctx.strokeStyle = ring.edge;
+      ctx.lineWidth = 1;
+      ctx.stroke();
     });
 
-    ctx.strokeStyle = 'rgba(230,240,250,0.48)';
+    ctx.strokeStyle = 'rgba(230,240,250,0.62)';
     ctx.lineWidth = 1.2;
     ctx.beginPath();
     ctx.arc(cx, cy, base*0.78, -0.9, 2.35);
@@ -1050,13 +1022,15 @@ function renderFallbackFuelViz(mount) {
   resize();
   window.addEventListener('resize', resize);
   fuelVizRuntime = {
-    raf: requestAnimationFrame(draw),
+    raf: 0,
     cleanup: () => {
       window.removeEventListener('resize', resize);
       if (fuelVizRuntime?.raf) cancelAnimationFrame(fuelVizRuntime.raf);
     }
   };
+  draw(performance.now());
 }
+
 
 function initFuelVisualization() {
   const mount = document.getElementById('fuel-viz');
@@ -1075,20 +1049,21 @@ function initFuelVisualization() {
     return;
   }
 
-  mount.innerHTML = '';
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-  camera.position.set(0, 0.4, 5.4);
+  try {
+    mount.innerHTML = '';
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+    camera.position.set(0, 0.4, 5.4);
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-  renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.15;
-  renderer.domElement.style.width = '100%';
-  renderer.domElement.style.height = '100%';
-  renderer.domElement.style.display = 'block';
-  mount.appendChild(renderer.domElement);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    if ('outputColorSpace' in renderer) renderer.outputColorSpace = THREE.SRGBColorSpace;
+    if ('toneMapping' in renderer) renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    renderer.domElement.style.width = '100%';
+    renderer.domElement.style.height = '100%';
+    renderer.domElement.style.display = 'block';
+    mount.appendChild(renderer.domElement);
 
   scene.add(new THREE.AmbientLight(0x92a3b5, 0.55));
   const key = new THREE.DirectionalLight(0xffffff, 1.35);
@@ -1184,22 +1159,25 @@ function initFuelVisualization() {
   if (fuelVizRuntime?.raf) cancelAnimationFrame(fuelVizRuntime.raf);
   if (fuelVizRuntime?.cleanup) fuelVizRuntime.cleanup();
 
-  fuelVizRuntime = {
-    raf: 0,
-    cleanup: () => {
-      mount.removeEventListener('pointerdown', onDown);
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-      window.removeEventListener('resize', resize);
-      particle.children.forEach((child) => {
-        if (child.geometry) child.geometry.dispose();
-        if (child.material) child.material.dispose();
-      });
-      renderer.dispose();
-    }
-  };
-  resize();
-  render();
+    fuelVizRuntime = {
+      raf: 0,
+      cleanup: () => {
+        mount.removeEventListener('pointerdown', onDown);
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+        window.removeEventListener('resize', resize);
+        particle.children.forEach((child) => {
+          if (child.geometry) child.geometry.dispose();
+          if (child.material) child.material.dispose();
+        });
+        renderer.dispose();
+      }
+    };
+    resize();
+    render();
+  } catch (err) {
+    renderFallbackFuelViz(mount);
+  }
 }
 
 const observer = new MutationObserver(() => setTimeout(animateGauges, 50));
