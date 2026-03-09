@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRISO-X Licensed Status — newcleo</title>
+<style>
+  :root {
+    --teal: #009EA1;
+    --teal-light: #21EAED;
+    --teal-dark: #025152;
+    --orange: #ED6C22;
+    --orange-light: #FD8F4B;
+    --gray: #768792;
+    --gray-light: #B4C1CB;
+    --dark: #313132;
+    --bg: #0B1A1A;
+    --bg-card: #0D2222;
+    --bg-card-2: #102A2A;
+    --nuclear: #6D648E;
+    --green: #6EE7B7;
+    --red: #F87171;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: linear-gradient(180deg, var(--bg) 0%, #071414 100%);
+    color: #fff;
+    min-height: 100vh;
+  }
+
+  a { color: var(--teal-light); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .header {
+    background: linear-gradient(180deg, var(--teal-dark) 0%, var(--bg) 100%);
+    border-bottom: 2px solid rgba(0,158,161,0.2);
+    padding: 20px 28px 0;
+  }
+  .header-inner { max-width: 1280px; margin: 0 auto; }
+  .header-top { display: flex; align-items: center; gap: 24px; margin-bottom: 16px; flex-wrap: wrap; }
+  .logo-mark span.new { color: var(--teal); font-style: italic; font-weight: 900; }
+  .logo-mark span.cleo { color: var(--orange); font-weight: 900; }
+  .logo-mark { font-family: 'Arial Black', 'Helvetica Neue', Arial, sans-serif; font-size: 28px; line-height: 1; letter-spacing: -0.02em; padding-right: 4px; }
+  .logo-underline { height: 2px; margin-top: 20px; background: linear-gradient(90deg, var(--teal), var(--orange)); border-radius: 1px; }
+  .header-divider { width: 1px; height: 34px; background: rgba(118,135,146,0.27); margin: 0 6px; }
+  .header-title { flex: 1; min-width: 280px; }
+  .header-title h1 { font-size: 22px; font-weight: 900; }
+  .header-title p { margin-top: 4px; font-size: 11px; color: var(--gray); }
+  .header-meta { text-align: right; }
+  .header-meta p { font-size: 10px; color: var(--gray); line-height: 1.5; }
+  .header-meta span { color: var(--gray-light); font-weight: 700; }
+
+  .tabs { display: flex; gap: 1px; overflow-x: auto; }
+  .tab-btn {
+    padding: 10px 18px; border: none; cursor: pointer; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.02em; border-radius: 8px 8px 0 0; font-family: Arial, sans-serif;
+    background: transparent; color: var(--gray); border-top: 3px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .tab-btn:hover { color: var(--gray-light); }
+  .tab-btn.active { background: var(--bg-card); color: #fff; }
+  .tab-btn.active[data-color="teal"] { border-top-color: var(--teal); }
+  .tab-btn.active[data-color="orange"] { border-top-color: var(--orange); }
+  .tab-btn.active[data-color="teal-light"] { border-top-color: var(--teal-light); }
+  .tab-btn.active[data-color="nuclear"] { border-top-color: var(--nuclear); }
+  .tab-btn.active[data-color="gray"] { border-top-color: var(--gray); }
+
+  .content { max-width: 1280px; margin: 0 auto; padding: 24px 28px; animation: fadeIn 0.5s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .status-hero {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+  .hero-card, .metrics-card, .info-card, .source-card, .timeline-card, .note-card {
+    background: var(--bg-card);
+    border: 1px solid rgba(2,81,82,0.33);
+    border-radius: 14px;
+    padding: 18px;
+  }
+  .hero-card {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(0,158,161,0.14), rgba(13,34,34,1) 38%, rgba(109,100,142,0.18));
+  }
+  .hero-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top right, rgba(33,234,237,0.18), transparent 30%);
+    pointer-events: none;
+  }
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: rgba(110,231,183,0.12);
+    color: var(--green);
+    border: 1px solid rgba(110,231,183,0.25);
+  }
+  .hero-card h2 { font-size: 30px; font-weight: 900; margin: 12px 0 8px; line-height: 1.08; max-width: 700px; }
+  .hero-card p { color: var(--gray-light); font-size: 13px; line-height: 1.55; max-width: 760px; }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-top: 18px;
+  }
+  .hero-mini {
+    background: rgba(7,20,20,0.48);
+    border: 1px solid rgba(0,158,161,0.18);
+    border-radius: 12px;
+    padding: 12px;
+  }
+  .hero-mini .k { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gray); font-weight: 700; }
+  .hero-mini .v { font-size: 18px; font-weight: 900; margin-top: 6px; }
+  .hero-mini .s { margin-top: 4px; color: var(--gray-light); font-size: 11px; line-height: 1.35; }
+
+  .summary-stack { display: grid; gap: 16px; }
+
+  .section-label, .gantt-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .section-label .bar, .gantt-title .bar { width: 4px; height: 18px; border-radius: 2px; }
+  .section-label span { font-size: 11px; font-weight: 700; color: var(--gray-light); letter-spacing: 0.06em; text-transform: uppercase; }
+  .gantt-title h3 { font-size: 14px; font-weight: 900; }
+
+  .strip-grid, .card-grid, .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+  }
+
+  .status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--gray-light);
+  }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 12px rgba(110,231,183,0.55);
+  }
+
+  .kpi-card {
+    background: var(--bg-card);
+    border: 1px solid rgba(2,81,82,0.33);
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .kpi-card .k { font-size: 10px; color: var(--gray); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; }
+  .kpi-card .v { font-size: 28px; font-weight: 900; margin-top: 8px; }
+  .kpi-card .s { margin-top: 6px; font-size: 11px; color: var(--gray-light); line-height: 1.45; }
+
+  .timeline-ribbon {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .timeline-step {
+    position: relative;
+    padding: 14px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(2,81,82,0.22), rgba(13,34,34,1));
+    border: 1px solid rgba(2,81,82,0.33);
+    min-height: 112px;
+  }
+  .timeline-step::after {
+    content: "";
+    position: absolute;
+    top: 22px;
+    right: -7px;
+    width: 14px;
+    height: 14px;
+    border-top: 1px solid rgba(2,81,82,0.45);
+    border-right: 1px solid rgba(2,81,82,0.45);
+    transform: rotate(45deg);
+    background: var(--bg);
+  }
+  .timeline-step:last-child::after { display: none; }
+  .timeline-step .tag { font-size: 10px; font-weight: 700; color: var(--gray); letter-spacing: 0.08em; text-transform: uppercase; }
+  .timeline-step .date { margin-top: 10px; font-size: 22px; font-weight: 900; }
+  .timeline-step .desc { margin-top: 8px; color: var(--gray-light); font-size: 12px; line-height: 1.5; }
+
+  .callout {
+    border-left: 4px solid var(--teal);
+    padding: 14px 16px;
+    background: rgba(0,158,161,0.08);
+    border-radius: 10px;
+    color: var(--gray-light);
+    line-height: 1.6;
+    font-size: 13px;
+  }
+
+  .gauge-card {
+    background: var(--bg-card); border: 1px solid rgba(2,81,82,0.33); border-radius: 12px;
+    padding: 18px 14px 12px; display: flex; flex-direction: column; align-items: center;
+    position: relative; overflow: hidden; transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  .gauge-card:hover { box-shadow: 0 0 20px rgba(0,158,161,0.08); }
+  .gauge-card .top-line {
+    position: absolute; top: 0; left: 0; right: 0; height: 2px; opacity: 0.6;
+  }
+  .gauge-card .label { margin: 0 0 2px; font-size: 12px; font-weight: 700; color: var(--gray-light); letter-spacing: 0.02em; text-align: center; }
+  .gauge-card .sub { margin: 0; font-size: 10px; color: var(--gray); text-align: center; line-height: 1.45; }
+
+  .metrics-card .title { margin: 0 0 14px; font-size: 12px; font-weight: 700; color: var(--gray-light); letter-spacing: 0.03em; }
+  .metric-row { display: flex; justify-content: space-between; margin-bottom: 10px; gap: 12px; }
+  .metric-row .k { font-size: 11px; color: var(--gray); }
+  .metric-row .v { font-size: 14px; font-weight: 900; color: #fff; text-align: right; }
+
+  .list-card ul { list-style: none; display: grid; gap: 10px; }
+  .list-card li {
+    padding: 12px;
+    border-radius: 10px;
+    background: rgba(7,20,20,0.5);
+    border: 1px solid rgba(2,81,82,0.22);
+  }
+  .list-card li strong { display: block; font-size: 12px; margin-bottom: 4px; }
+  .list-card li span { color: var(--gray-light); font-size: 11px; line-height: 1.5; }
+
+  .readiness-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .step-list { display: grid; gap: 12px; }
+  .step-item {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 12px;
+    background: rgba(7,20,20,0.48);
+    border: 1px solid rgba(2,81,82,0.22);
+  }
+  .step-num {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 18px;
+    background: rgba(0,158,161,0.13); color: var(--teal-light);
+    border: 1px solid rgba(0,158,161,0.22);
+  }
+  .step-item h4 { font-size: 13px; margin-bottom: 6px; }
+  .step-item p { font-size: 12px; color: var(--gray-light); line-height: 1.55; }
+  .step-item .meta { margin-top: 8px; font-size: 10px; color: var(--gray); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; }
+
+  .source-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 14px;
+  }
+  .source-card .type {
+    display: inline-block;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--gray-light);
+    background: rgba(0,158,161,0.10);
+    border: 1px solid rgba(0,158,161,0.20);
+  }
+  .source-card h4 { margin-top: 10px; font-size: 14px; line-height: 1.35; }
+  .source-card p { margin-top: 8px; color: var(--gray-light); font-size: 12px; line-height: 1.55; }
+  .source-card .meta { margin-top: 12px; font-size: 10px; color: var(--gray); letter-spacing: 0.06em; text-transform: uppercase; font-weight: 700; }
+
+  .table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid rgba(2,81,82,0.33); }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  thead tr { background: var(--teal); }
+  th {
+    padding: 10px 12px; text-align: left; color: #fff; font-weight: 700;
+    font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
+  }
+  tbody tr { border-bottom: 1px solid rgba(2,81,82,0.2); transition: background 0.15s; }
+  tbody tr:nth-child(even) { background: rgba(2,81,82,0.13); }
+  tbody tr:hover { background: rgba(2,81,82,0.33); }
+  td { padding: 8px 12px; }
+  td.id { color: var(--gray); font-weight: 700; }
+  td.task-name { color: #fff; max-width: 260px; }
+  td.date { color: var(--gray-light); font-size: 10px; }
+  td.dur { color: var(--gray-light); text-align: right; }
+  td.pct { color: var(--teal); font-weight: 700; text-align: right; }
+
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+  }
+  .badge-completed { background: rgba(0,158,161,0.13); color: var(--teal-light); border: 1px solid rgba(0,158,161,0.33); }
+  .review-safety { color: var(--orange); font-size: 10px; font-weight: 700; }
+  .review-env { color: var(--teal-light); font-size: 10px; font-weight: 700; }
+
+  .mbar { display: flex; align-items: center; gap: 8px; }
+  .mbar-track { flex: 1; height: 5px; border-radius: 3px; background: rgba(2,81,82,0.53); }
+  .mbar-fill { height: 100%; border-radius: 3px; transition: width 0.8s; }
+  .mbar-text { font-size: 10px; color: var(--gray-light); min-width: 32px; text-align: right; }
+
+  .gantt-section { margin-bottom: 32px; }
+  .gantt-years { position: relative; height: 20px; margin-bottom: 2px; margin-left: 240px; }
+  .gantt-years span { position: absolute; font-size: 10px; color: var(--gray); font-weight: 700; transform: translateX(-50%); }
+  .gantt-row { display: flex; align-items: center; margin-bottom: 2px; height: 26px; }
+  .gantt-label {
+    width: 230px; flex-shrink: 0; font-size: 11px; color: var(--gray-light); padding-right: 10px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .gantt-label .num { color: var(--gray); font-weight: 700; margin-right: 6px; }
+  .gantt-track { flex: 1; position: relative; height: 18px; background: rgba(2,81,82,0.13); border-radius: 3px; }
+  .gantt-bar { position: absolute; height: 100%; border-radius: 3px; min-width: 4px; }
+
+  .legend { display: flex; gap: 14px; margin-bottom: 14px; flex-wrap: wrap; }
+  .legend-item { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--gray-light); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  details.disclosure {
+    margin-top: 14px;
+    border: 1px solid rgba(2,81,82,0.33);
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(7,20,20,0.4);
+  }
+  details.disclosure summary {
+    padding: 14px 16px;
+    cursor: pointer;
+    list-style: none;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gray-light);
+    background: rgba(2,81,82,0.18);
+  }
+  details.disclosure summary::-webkit-details-marker { display: none; }
+  .disclosure-body { padding: 16px; color: var(--gray-light); font-size: 12px; line-height: 1.6; }
+  .disclosure-body ul { list-style: none; display: grid; gap: 10px; }
+
+  .footer { padding: 20px 28px; text-align: center; border-top: 1px solid rgba(2,81,82,0.2); }
+  .footer p { font-size: 10px; color: var(--gray); }
+  .footer .logo-sm span.new { color: var(--teal); font-style: italic; font-weight: 900; }
+  .footer .logo-sm span.cleo { color: var(--orange); font-weight: 900; }
+  .footer .logo-sm { font-family: 'Arial Black', Arial, sans-serif; font-size: 11px; }
+
+  @media (max-width: 980px) {
+    .status-hero, .readiness-grid { grid-template-columns: 1fr; }
+    .timeline-ribbon { grid-template-columns: 1fr; }
+    .timeline-step::after { display: none; }
+  }
+
+  @media (max-width: 700px) {
+    .content, .header, .footer { padding-left: 16px; padding-right: 16px; }
+    .hero-card h2 { font-size: 24px; }
+    .gantt-years { margin-left: 0; height: auto; display: none; }
+    .gantt-row { display: block; height: auto; margin-bottom: 10px; }
+    .gantt-label { width: auto; margin-bottom: 6px; }
+    .gantt-track { height: 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-inner">
+    <div class="header-top">
+      <div>
+        <div class="logo-mark"><span class="new">new</span><span class="cleo">cleo</span></div>
+      </div>
+      <div class="header-divider"></div>
+      <div class="header-title">
+        <h1>TRISO-X Licensed Status</h1>
+        <p>NRC fuel fabrication facility dashboard — licensing complete, readiness gates in focus</p>
+      </div>
+      <div class="header-meta">
+        <p>Refreshed: <span>3/9/2026</span></p>
+        <p>Key milestone: <span>2/13/2026 NRC license issued</span></p>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="0" data-color="teal" onclick="switchTab(0)">Overview</button>
+      <button class="tab-btn" data-tab="1" data-color="nuclear" onclick="switchTab(1)">Post-License Readiness</button>
+      <button class="tab-btn" data-tab="2" data-color="orange" onclick="switchTab(2)">Safety &amp; Safeguards</button>
+      <button class="tab-btn" data-tab="3" data-color="teal-light" onclick="switchTab(3)">Environmental Impact</button>
+      <button class="tab-btn" data-tab="4" data-color="gray" onclick="switchTab(4)">Source Documents</button>
+      <button class="tab-btn" data-tab="5" data-color="nuclear" onclick="switchTab(5)">Timeline</button>
+      <button class="tab-btn" data-tab="6" data-color="gray" onclick="switchTab(6)">Data Table</button>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="tab-panel active" id="tab-0"></div>
+  <div class="tab-panel" id="tab-1"></div>
+  <div class="tab-panel" id="tab-2"></div>
+  <div class="tab-panel" id="tab-3"></div>
+  <div class="tab-panel" id="tab-4"></div>
+  <div class="tab-panel" id="tab-5"></div>
+  <div class="tab-panel" id="tab-6"></div>
+</div>
+
+<div class="footer">
+  <p><span class="logo-sm"><span class="new">new</span><span class="cleo">cleo</span></span> — Market Intelligence · Primary source set updated to reflect license issuance and post-license conditions</p>
+</div>
+
+<script>
+const DATA = [
+  {id:1,task:"Application Acceptance",status:"Completed",review:"Safety and Safeguards",start:"2022-09-23",end:"2022-11-18",dur:56,mc:7,mt:7},
+  {id:1,task:"ER Acceptance",status:"Completed",review:"Environmental Impact",start:"2022-09-23",end:"2022-11-18",dur:56,mc:4,mt:4},
+  {id:2,task:"Hearing Request",status:"Completed",review:"Safety and Safeguards",start:"2023-02-03",end:"2023-04-04",dur:60,mc:4,mt:4},
+  {id:2,task:"Scoping",status:"Completed",review:"Environmental Impact",start:"2022-08-31",end:"2022-12-30",dur:121,mc:5,mt:5},
+  {id:3,task:"Develop Draft SER, Excluding HITIs",status:"Completed",review:"Safety and Safeguards",start:"2022-12-01",end:"2024-02-26",dur:452,mc:14,mt:14},
+  {id:3,task:"Draft EIS, Original ER",status:"Completed",review:"Environmental Impact",start:"2023-03-01",end:"2024-06-30",dur:487,mc:5,mt:5},
+  {id:4,task:"RAIs, Excluding HITIs",status:"Completed",review:"Safety and Safeguards",start:"2022-12-01",end:"2024-02-26",dur:452,mc:14,mt:14},
+  {id:4,task:"Revised ER",status:"Completed",review:"Environmental Impact",start:"2024-03-01",end:"2025-03-31",dur:395,mc:2,mt:2},
+  {id:5,task:"Response to RAIs, Excluding HITIs",status:"Completed",review:"Safety and Safeguards",start:"2022-12-01",end:"2024-03-27",dur:482,mc:14,mt:14},
+  {id:5,task:"RAIs for the Revised ER",status:"Completed",review:"Environmental Impact",start:"2025-03-31",end:"2025-08-06",dur:128,mc:3,mt:3},
+  {id:6,task:"Draft EIS Publication",status:"Completed",review:"Environmental Impact",start:"2025-03-31",end:"2025-10-31",dur:214,mc:3,mt:3},
+  {id:6,task:"Revised License Application",status:"Completed",review:"Safety and Safeguards",start:"2024-03-27",end:"2025-01-31",dur:310,mc:7,mt:7},
+  {id:7,task:"Draft EIS Comment Period",status:"Completed",review:"Environmental Impact",start:"2025-10-03",end:"2026-01-30",dur:119,mc:5,mt:5},
+  {id:7,task:"Draft SER, Revised Application",status:"Completed",review:"Safety and Safeguards",start:"2025-01-31",end:"2025-11-28",dur:301,mc:7,mt:7},
+  {id:8,task:"Final EIS",status:"Completed",review:"Environmental Impact",start:"2025-11-20",end:"2026-02-13",dur:85,mc:4,mt:4},
+  {id:8,task:"RAIs, Revised Application",status:"Completed",review:"Safety and Safeguards",start:"2025-01-31",end:"2025-08-22",dur:203,mc:7,mt:7},
+  {id:9,task:"EPA Notification",status:"Completed",review:"Environmental Impact",start:"2026-01-19",end:"2026-02-13",dur:25,mc:1,mt:1},
+  {id:9,task:"Responses to RAIs, Revised Application",status:"Completed",review:"Safety and Safeguards",start:"2025-06-01",end:"2025-11-05",dur:157,mc:7,mt:7},
+  {id:10,task:"Division Review of Final Draft SER",status:"Completed",review:"Safety and Safeguards",start:"2026-01-05",end:"2026-02-06",dur:32,mc:20,mt:20},
+  {id:11,task:"Resolution of Comments on Final Draft SER",status:"Completed",review:"Safety and Safeguards",start:"2026-01-12",end:"2026-02-13",dur:32,mc:20,mt:20},
+  {id:12,task:"Complete SER and Licensing Decision",status:"Completed",review:"Safety and Safeguards",start:"2026-01-12",end:"2026-02-13",dur:32,mc:3,mt:3},
+];
+
+const RES = {
+  overall:       { est:18700, chg:16072.50, pct:86 },
+  safety:        { est:13800, chg:13041.75, pct:95 },
+  environmental: { est:4900,  chg:3030.75,  pct:62 },
+};
+
+const STATUS = {
+  title: 'Licensed, not just under review',
+  subtitle: 'The NRC issued TRISO-X a 40-year Part 70 Special Nuclear Material license on February 13, 2026, making it the first-ever U.S. Category II fuel fabrication facility and the first newly licensed fuel fabrication plant in roughly 50 years.',
+  licenseDate: 'February 13, 2026',
+  location: 'Oak Ridge, Tennessee',
+  facility: 'TX-1',
+  schedule: '3 months ahead',
+  nextPhase: 'Construction, readiness and uranium-introduction gates',
+  commercialContext: 'DOE says TX-1 is under construction and positions the facility as the first commercial-scale U.S. HALEU TRISO fuel fabrication plant, with commercial fuel production expected in early 2028.'
+};
+
+const MILESTONES = [
+  { tag: 'Original schedule', date: 'June 2025', desc: 'Initial NRC review target before the application was revised.' },
+  { tag: 'Revised schedule', date: 'May 2026', desc: 'Updated staff schedule after the revised application and environmental report.' },
+  { tag: 'Actual outcome', date: 'Feb 13, 2026', desc: 'License issued three months ahead of the published revised schedule.' },
+];
+
+const CHANGE_DRIVERS = [
+  {
+    title: 'Commercial HALEU shortage changed the near-term feed path',
+    body: 'NRC’s updated schedule letter says TRISO-X revised the application in part because commercial HALEU oxide was not available in the near term, shifting initial feed from uranium oxide to uranyl nitrate.'
+  },
+  {
+    title: 'Facility scope expanded',
+    body: 'The revised application reflected a second process building and higher throughput ambitions, reshaping both safety and environmental review work.'
+  },
+  {
+    title: 'Design changes also reduced hazards',
+    body: 'NRC said the revised application also incorporated design changes that reduced several process hazards, which became part of the new review basis.'
+  }
+];
+
+const NEXT_STEPS = [
+  {
+    num: '1',
+    title: 'Construction and commissioning continue',
+    body: 'License issuance clears the regulatory gate, but the story now moves to physical build-out, equipment qualification, procedure closeout and organizational readiness at TX-1.',
+    meta: 'Current frame: post-license execution'
+  },
+  {
+    num: '2',
+    title: 'Operational readiness review',
+    body: 'The revised application describes operational readiness reviews led by TRISO-X to confirm equipment is tested, personnel are trained, procedures are validated and systems are ready for operation.',
+    meta: 'Gate: readiness before nuclear operations'
+  },
+  {
+    num: '3',
+    title: '90-day advance notice before uranium introduction',
+    body: 'License condition S-9 requires TRISO-X to provide the NRC with 90 days’ advance notice before introducing uranium into any process module.',
+    meta: 'Explicit license condition'
+  },
+  {
+    num: '4',
+    title: 'Commercial production ramp',
+    body: 'DOE places commercial fuel production in early 2028, which makes schedule discipline after licensing as important as the licensing win itself.',
+    meta: 'Commercial milestone'
+  },
+];
+
+const TECH_ISSUES = [
+  'Integrated safety analysis (ISA)',
+  'Human factors',
+  'Management measures',
+  'Structural safety',
+  'Criticality safety',
+  'Material control, accountability and safeguards'
+];
+
+const SOURCES = [
+  {
+    type: 'NRC news release',
+    title: 'NRC Licenses TRISO-X LLC Fuel Fabrication Facility in Tennessee',
+    url: 'https://www.nrc.gov/sites/default/files/cdn/doc-collection-news/2026/26-019.pdf',
+    blurb: 'Key top-line source for the license issuance date, first-ever Category II status, and the statement that approval came three months ahead of the published schedule.',
+    meta: 'Published February 13, 2026'
+  },
+  {
+    type: 'NRC license',
+    title: 'License SNM-7007 for the TRISO-X Fuel Fabrication Facility',
+    url: 'https://www.nrc.gov/docs/ML2528/ML25289A013.pdf',
+    blurb: 'Primary licensing document. Includes Safety Condition S-9 requiring 90 days’ advance notice before uranium introduction into any process module.',
+    meta: 'Issued February 13, 2026'
+  },
+  {
+    type: 'NRC schedule letter',
+    title: 'Updated License Review Schedule Letter (ML23305A193)',
+    url: 'https://www.nrc.gov/docs/ML2330/ML23305A193.pdf',
+    blurb: 'Explains why the schedule moved: revised application, commercial HALEU oxide shortage, feedstock shift to uranyl nitrate, expanded facility scope, and design changes that reduced hazards. Also cites 118 safety/safeguards RAIs and 38 environmental RAIs.',
+    meta: 'Dated November 1, 2023'
+  },
+  {
+    type: 'NRC environmental review',
+    title: 'Environmental Impact Statement for the TRISO-X Special Nuclear Material License',
+    url: 'https://www.nrc.gov/docs/ML2603/ML26033A130.pdf',
+    blurb: 'Final environmental review anchor for the project and the issuance decision.',
+    meta: 'February 1, 2026'
+  },
+  {
+    type: 'DOE context',
+    title: 'TRISO-X Receives NRC Special Nuclear Material License for Advanced Fuel Fabrication Facility',
+    url: 'https://www.energy.gov/ne/articles/triso-x-receives-nrc-special-nuclear-material-license-advanced-fuel-fabrication',
+    blurb: 'Useful commercial context source for TX-1 construction status, Oak Ridge location, ARDP linkage, and DOE’s early-2028 commercial production expectation.',
+    meta: 'Published February 25, 2026'
+  }
+];
+
+const safetyData = DATA.filter(d => d.review === 'Safety and Safeguards');
+const envData    = DATA.filter(d => d.review === 'Environmental Impact');
+
+const sum = (arr, k) => arr.reduce((a, d) => a + d[k], 0);
+const sMC = sum(safetyData,'mc'), sMT = sum(safetyData,'mt');
+const eMC = sum(envData,'mc'),    eMT = sum(envData,'mt');
+const allMC = sMC+eMC, allMT = sMT+eMT;
+
+const TEAL = '#009EA1', TEAL_LT = '#21EAED', TEAL_DK = '#025152';
+const ORANGE = '#ED6C22', GRAY = '#768792', GRAY_LT = '#B4C1CB', NUCLEAR = '#6D648E';
+
+function switchTab(i) {
+  document.querySelectorAll('.tab-btn').forEach((b,j) => b.classList.toggle('active', j===i));
+  document.querySelectorAll('.tab-panel').forEach((p,j) => {
+    p.classList.toggle('active', j===i);
+    if (j===i) { p.style.animation='none'; p.offsetHeight; p.style.animation='fadeIn 0.4s ease'; }
+  });
+}
+
+function createGaugeSVG(value, color, id) {
+  const r=78, cx=100, cy=93;
+  const sa=-210*Math.PI/180, ea=30*Math.PI/180, sw=ea-sa;
+  const pt = f => { const a=sa+sw*f; return [cx+r*Math.cos(a), cy+r*Math.sin(a)]; };
+  const path = (from,to) => {
+    const pts=[]; for(let i=0;i<=50;i++){const p=pt(from+(to-from)*i/50); pts.push(p.join(','));}
+    return `M ${pts[0]} ${pts.slice(1).map(p=>`L ${p}`).join(' ')}`;
+  };
+  return `<svg viewBox="0 0 200 125" width="190" height="118">
+    <defs>
+      <linearGradient id="gg-${id}" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="${color}" stop-opacity="0.6"/>
+        <stop offset="50%" stop-color="${color}" stop-opacity="1"/>
+        <stop offset="100%" stop-color="${color}" stop-opacity="0.8"/>
+      </linearGradient>
+    </defs>
+    <path d="${path(0,1)}" fill="none" stroke="${TEAL_DK}88" stroke-width="16" stroke-linecap="round"/>
+    <path class="gauge-arc" data-value="${value}" d="${path(0,0.001)}" fill="none" stroke="url(#gg-${id})" stroke-width="16" stroke-linecap="round" style="filter:drop-shadow(0 0 12px ${color}44);transition:d 1.4s cubic-bezier(.22,1,.36,1)"/>
+    <text x="${cx}" y="${cy-6}" text-anchor="middle" fill="#fff" font-size="32" font-weight="900" font-family="Arial" class="gauge-text" data-value="${value}">0%</text>
+    <text x="22" y="118" fill="${GRAY}" font-size="10" font-family="Arial">0%</text>
+    <text x="166" y="118" fill="${GRAY}" font-size="10" font-family="Arial">100%</text>
+  </svg>`;
+}
+
+function gaugeCard(value, label, color, subLabel, id) {
+  return `<div class="gauge-card" onmouseenter="this.style.borderColor='${color}44';this.style.boxShadow='0 0 20px ${color}15'" onmouseleave="this.style.borderColor='rgba(2,81,82,0.33)';this.style.boxShadow='none'">
+    <div class="top-line" style="background:linear-gradient(90deg,transparent,${color},transparent)"></div>
+    <p class="label">${label}</p>
+    ${createGaugeSVG(value, color, id)}
+    <p class="sub">${subLabel}</p>
+  </div>`;
+}
+
+function kpiCard(k, v, s, color='#fff') {
+  return `<div class="kpi-card"><div class="k">${k}</div><div class="v" style="color:${color}">${v}</div><div class="s">${s}</div></div>`;
+}
+
+function tableHTML(data) {
+  const rows = data.map(d => {
+    const isSafety = d.review.includes('Safety');
+    const barColor = isSafety ? ORANGE : TEAL;
+    const pct = d.mt > 0 ? (d.mc/d.mt)*100 : 0;
+    return `<tr>
+      <td class="id">${String(d.id).padStart(2,'0')}</td>
+      <td class="task-name">${d.task}</td>
+      <td><span class="badge badge-completed">${d.status}</span></td>
+      <td class="${isSafety?'review-safety':'review-env'}">${d.review}</td>
+      <td class="date">${d.start}</td>
+      <td class="date">${d.end}</td>
+      <td class="dur">${d.dur}</td>
+      <td style="min-width:100px">
+        <div class="mbar">
+          <div class="mbar-track"><div class="mbar-fill" style="width:${pct}%;background:${barColor}"></div></div>
+          <span class="mbar-text">${d.mc}/${d.mt}</span>
+        </div>
+      </td>
+      <td class="pct">100%</td>
+    </tr>`;
+  }).join('');
+
+  return `<div class="table-wrap"><table>
+    <thead><tr><th>ID</th><th>Task</th><th>Status</th><th>Review Track</th><th>Start</th><th>End</th><th>Days</th><th>Milestones</th><th>%</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+}
+
+function reviewPanel(data, color, rk, prefix) {
+  const r = RES[rk];
+  const mc = sum(data,'mc'), mt = sum(data,'mt');
+  const avgDur = Math.round(sum(data,'dur')/data.length);
+  const maxDur = Math.max(...data.map(d=>d.dur));
+
+  return `<div class="detail-grid">
+    ${gaugeCard(100, 'Review Completion', color, `${data.length} tasks completed`, prefix+'-comp')}
+    ${gaugeCard(r.pct, 'Resources Charged', color, `${r.chg.toLocaleString()} / ${r.est.toLocaleString()} hrs`, prefix+'-res')}
+    <div class="metrics-card">
+      <p class="title">Key Metrics</p>
+      <div class="metric-row"><span class="k">Total Tasks</span><span class="v">${data.length}</span></div>
+      <div class="metric-row"><span class="k">Milestones</span><span class="v">${mc} / ${mt}</span></div>
+      <div class="metric-row"><span class="k">Avg Duration</span><span class="v">${avgDur}d</span></div>
+      <div class="metric-row"><span class="k">Longest Task</span><span class="v">${maxDur}d</span></div>
+    </div>
+  </div>
+  <div class="section-label"><div class="bar" style="background:${color}"></div><span>Task Details</span></div>
+  ${tableHTML(data)}`;
+}
+
+function ganttHTML(data, color, label) {
+  const dates = data.flatMap(d => [new Date(d.start), new Date(d.end)]);
+  const mn = Math.min(...dates), mx = Math.max(...dates), tot = mx - mn;
+  const yrs = [];
+  for (let y = new Date(mn).getFullYear(); y <= new Date(mx).getFullYear(); y++) yrs.push(y);
+
+  const yearMarkers = yrs.map(y => {
+    const l = Math.max(0, ((new Date(y,0,1)-mn)/tot)*100);
+    return `<span style="left:${l}%">${y}</span>`;
+  }).join('');
+
+  const rows = data.map(d => {
+    const s = new Date(d.start), e = new Date(d.end);
+    const l = ((s-mn)/tot)*100, w = Math.max(0.5, ((e-s)/tot)*100);
+    return `<div class="gantt-row">
+      <div class="gantt-label"><span class="num">${String(d.id).padStart(2,'0')}</span>${d.task}</div>
+      <div class="gantt-track">
+        <div class="gantt-bar" style="left:${l}%;width:${w}%;background:linear-gradient(90deg,${color}aa,${color});box-shadow:0 0 8px ${color}33" title="${d.start} → ${d.end} (${d.dur}d)"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `<div class="gantt-section">
+    <div class="gantt-title"><div class="bar" style="background:${color}"></div><h3>${label}</h3></div>
+    <div class="gantt-years">${yearMarkers}</div>
+    ${rows}
+  </div>`;
+}
+
+function renderOverview() {
+  const milestoneHTML = MILESTONES.map((m, idx) => `<div class="timeline-step">
+      <div class="tag">${m.tag}</div>
+      <div class="date">${m.date}</div>
+      <div class="desc">${m.desc}</div>
+    </div>`).join('');
+
+  const changesHTML = CHANGE_DRIVERS.map(c => `<li><strong>${c.title}</strong><span>${c.body}</span></li>`).join('');
+  const issueHTML = TECH_ISSUES.map(i => `<li><strong>${i}</strong><span>One of the technical issue areas NRC highlighted as especially consequential during the review.</span></li>`).join('');
+
+  return `
+    <div class="status-hero">
+      <div class="hero-card">
+        <div class="eyebrow">Status reset</div>
+        <h2>${STATUS.title}</h2>
+        <p>${STATUS.subtitle}</p>
+        <div class="hero-grid">
+          <div class="hero-mini"><div class="k">License</div><div class="v">40-year Part 70</div><div class="s">Issued ${STATUS.licenseDate}</div></div>
+          <div class="hero-mini"><div class="k">Facility</div><div class="v">${STATUS.facility}</div><div class="s">${STATUS.location}</div></div>
+          <div class="hero-mini"><div class="k">Published schedule</div><div class="v">${STATUS.schedule}</div><div class="s">Ahead of revised target</div></div>
+          <div class="hero-mini"><div class="k">Now tracking</div><div class="v">Readiness</div><div class="s">${STATUS.nextPhase}</div></div>
+        </div>
+      </div>
+      <div class="summary-stack">
+        <div class="hero-card" style="background:linear-gradient(180deg, rgba(109,100,142,0.20), rgba(13,34,34,1));">
+          <div class="status-chip"><span class="status-dot"></span>Headline</div>
+          <h2 style="font-size:22px; max-width:none;">What this page should now answer</h2>
+          <p style="font-size:13px;">Not “is the application still under review?” but “what changed, what gates remain before uranium is introduced, and how quickly can TX-1 turn a license win into operating reality?”</p>
+          <div class="callout" style="margin-top:14px; border-left-color: var(--nuclear); background: rgba(109,100,142,0.10);">${STATUS.commercialContext}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label"><div class="bar" style="background:${TEAL}"></div><span>Key Snapshot</span></div>
+    <div class="strip-grid">
+      ${kpiCard('Project state', 'Licensed', 'Review complete. The story now moves to execution and readiness.', '#6EE7B7')}
+      ${kpiCard('Review completion', '100%', `${allMC} of ${allMT} tracked milestones completed.`, TEAL)}
+      ${kpiCard('Safety & safeguards RAIs', '118', 'Original application responses cited by the NRC schedule update.', ORANGE)}
+      ${kpiCard('Environmental RAIs', '38', 'Original environmental-report RAI volume cited in the schedule update.', TEAL_LT)}
+      ${kpiCard('Technical issue areas', '6', 'ISA, human factors, management measures, structural safety, criticality, and MC&A/safeguards.', NUCLEAR)}
+      ${kpiCard('Next hard gate', '90 days', 'Advance notice required before introducing uranium into any process module.', '#fff')}
+    </div>
+
+    <div class="section-label" style="margin-top:18px;"><div class="bar" style="background:${NUCLEAR}"></div><span>Schedule Arc</span></div>
+    <div class="timeline-ribbon">${milestoneHTML}</div>
+
+    <div class="card-grid" style="margin-top:18px;">
+      <div class="list-card metrics-card">
+        <p class="title">Why the schedule moved</p>
+        <ul>${changesHTML}</ul>
+      </div>
+      <div class="list-card metrics-card">
+        <p class="title">Review intensity, not just duration</p>
+        <ul>${issueHTML}</ul>
+      </div>
+    </div>
+
+    <details class="disclosure">
+      <summary>Show source-aware framing notes</summary>
+      <div class="disclosure-body">
+        <ul>
+          <li><strong>License issued:</strong> The NRC announced the license on February 13, 2026 and explicitly said approval came three months ahead of the published schedule.</li>
+          <li><strong>Why a redesign mattered:</strong> The NRC’s schedule update explains the shift to uranyl nitrate feed, the second process building, higher capacity, and hazard-reducing design changes.</li>
+          <li><strong>Why “next gates” matter:</strong> The license itself adds a concrete notice requirement before uranium introduction, which is exactly the kind of post-license milestone the original page was missing.</li>
+        </ul>
+      </div>
+    </details>`;
+}
+
+function renderReadiness() {
+  const steps = NEXT_STEPS.map(s => `<div class="step-item"><div class="step-num">${s.num}</div><div><h4>${s.title}</h4><p>${s.body}</p><div class="meta">${s.meta}</div></div></div>`).join('');
+  return `
+    <div class="readiness-grid">
+      <div class="metrics-card">
+        <div class="section-label"><div class="bar" style="background:${NUCLEAR}"></div><span>What happens next</span></div>
+        <div class="step-list">${steps}</div>
+      </div>
+      <div class="summary-stack">
+        <div class="metrics-card">
+          <p class="title">Post-license focus shift</p>
+          <div class="metric-row"><span class="k">Primary dashboard question</span><span class="v">Readiness</span></div>
+          <div class="metric-row"><span class="k">License condition to watch</span><span class="v">S-9</span></div>
+          <div class="metric-row"><span class="k">Notice window</span><span class="v">90 days</span></div>
+          <div class="metric-row"><span class="k">Commercial target</span><span class="v">Early 2028</span></div>
+        </div>
+        <div class="note-card">
+          <div class="section-label"><div class="bar" style="background:${TEAL_LT}"></div><span>Interpretation</span></div>
+          <div class="callout">The license win is real, but it is not the last act. For users tracking TRISO-X commercially or competitively, the more revealing signals now are: construction cadence, readiness reviews, staffing and training maturity, the 90-day uranium-introduction notice, and whether the early-2028 production target holds.</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderSources() {
+  const cards = SOURCES.map(s => `<div class="source-card">
+      <span class="type">${s.type}</span>
+      <h4><a href="${s.url}" target="_blank" rel="noopener noreferrer">${s.title}</a></h4>
+      <p>${s.blurb}</p>
+      <div class="meta">${s.meta}</div>
+    </div>`).join('');
+  return `<div class="section-label"><div class="bar" style="background:${TEAL}"></div><span>Primary source drawer</span></div>
+  <div class="source-grid">${cards}</div>`;
+}
+
+function renderAll() {
+  document.getElementById('tab-0').innerHTML = renderOverview();
+  document.getElementById('tab-1').innerHTML = renderReadiness();
+  document.getElementById('tab-2').innerHTML = reviewPanel(safetyData, ORANGE, 'safety', 'sf');
+  document.getElementById('tab-3').innerHTML = reviewPanel(envData, TEAL_LT, 'environmental', 'ev');
+  document.getElementById('tab-4').innerHTML = renderSources();
+  document.getElementById('tab-5').innerHTML = ganttHTML(safetyData, ORANGE, 'Safety and Safeguards') + ganttHTML(envData, TEAL_LT, 'Environmental Impact');
+  document.getElementById('tab-6').innerHTML = `
+    <div class="legend">
+      <span class="legend-item"><span class="legend-dot" style="background:${ORANGE};box-shadow:0 0 6px ${ORANGE}44"></span>Safety &amp; Safeguards</span>
+      <span class="legend-item"><span class="legend-dot" style="background:${TEAL_LT};box-shadow:0 0 6px ${TEAL_LT}44"></span>Environmental Impact</span>
+    </div>
+    ${tableHTML(DATA)}`;
+
+  requestAnimationFrame(() => animateGauges());
+}
+
+function animateGauges() {
+  const r=78, cx=100, cy=93;
+  const sa=-210*Math.PI/180, ea=30*Math.PI/180, sw=ea-sa;
+  const pt = f => { const a=sa+sw*f; return [cx+r*Math.cos(a), cy+r*Math.sin(a)]; };
+  const pathD = (from,to) => {
+    const pts=[]; for(let i=0;i<=50;i++){const p=pt(from+(to-from)*i/50); pts.push(p.join(','));}
+    return `M ${pts[0]} ${pts.slice(1).map(p=>`L ${p}`).join(' ')}`;
+  };
+
+  document.querySelectorAll('.gauge-arc').forEach(arc => {
+    const val = parseFloat(arc.dataset.value);
+    const textEl = arc.parentElement.querySelector('.gauge-text');
+    arc.setAttribute('d', pathD(0, val/100));
+    const start = performance.now();
+    const tick = (now) => {
+      const t = Math.min((now-start)/1400, 1);
+      const ease = 1 - Math.pow(1-t, 3);
+      if (textEl) textEl.textContent = Math.round(ease * val) + '%';
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+}
+
+const observer = new MutationObserver(() => setTimeout(animateGauges, 50));
+document.querySelectorAll('.tab-panel').forEach(p => observer.observe(p, { attributes: true, attributeFilter: ['class'] }));
+
+renderAll();
+</script>
+</body>
+</html>
