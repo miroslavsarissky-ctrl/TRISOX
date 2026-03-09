@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRISO-X Review Status — newcleo</title>
+<style>
+  :root {
+    --teal: #009EA1;
+    --teal-light: #21EAED;
+    --teal-dark: #025152;
+    --orange: #ED6C22;
+    --orange-light: #FD8F4B;
+    --gray: #768792;
+    --gray-light: #B4C1CB;
+    --dark: #313132;
+    --bg: #0B1A1A;
+    --bg-card: #0D2222;
+    --nuclear: #6D648E;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: linear-gradient(180deg, var(--bg) 0%, #071414 100%);
+    color: #fff;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: linear-gradient(180deg, var(--teal-dark) 0%, var(--bg) 100%);
+    border-bottom: 2px solid rgba(0,158,161,0.2);
+    padding: 20px 28px 0;
+  }
+  .header-inner { max-width: 1200px; margin: 0 auto; }
+  .header-top { display: flex; align-items: center; gap: 14; margin-bottom: 16; flex-wrap: wrap; }
+  .logo-mark span.new { color: var(--teal); font-style: italic; font-weight: 900; }
+  .logo-mark span.cleo { color: var(--orange); font-weight: 900; }
+  .logo-mark { font-family: 'Arial Black', 'Helvetica Neue', Arial, sans-serif; font-size: 28px; line-height: 1; letter-spacing: -0.02em; }
+  .logo-underline { height: 2px; margin-top: 3px; background: linear-gradient(90deg, var(--teal), var(--orange)); border-radius: 1px; }
+  .header-divider { width: 1px; height: 34px; background: rgba(118,135,146,0.27); }
+  .header-title { flex: 1; min-width: 200px; }
+  .header-title h1 { font-size: 20px; font-weight: 900; }
+  .header-title p { margin-top: 2px; font-size: 11px; color: var(--gray); }
+  .header-meta { text-align: right; }
+  .header-meta p { font-size: 10px; color: var(--gray); line-height: 1.5; }
+  .header-meta span { color: var(--gray-light); font-weight: 700; }
+
+  /* ── Tabs ── */
+  .tabs { display: flex; gap: 1px; overflow-x: auto; }
+  .tab-btn {
+    padding: 10px 18px; border: none; cursor: pointer; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.02em; border-radius: 8px 8px 0 0; font-family: Arial, sans-serif;
+    background: transparent; color: var(--gray); border-top: 3px solid transparent;
+    transition: all 0.2s;
+  }
+  .tab-btn:hover { color: var(--gray-light); }
+  .tab-btn.active { background: var(--bg-card); color: #fff; }
+  .tab-btn.active[data-color="teal"] { border-top-color: var(--teal); }
+  .tab-btn.active[data-color="orange"] { border-top-color: var(--orange); }
+  .tab-btn.active[data-color="teal-light"] { border-top-color: var(--teal-light); }
+  .tab-btn.active[data-color="nuclear"] { border-top-color: var(--nuclear); }
+  .tab-btn.active[data-color="gray"] { border-top-color: var(--gray); }
+
+  /* ── Content ── */
+  .content { max-width: 1200px; margin: 0 auto; padding: 24px 28px; animation: fadeIn 0.5s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── Gauge Grid ── */
+  .gauge-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 16px; }
+
+  /* ── Gauge Card ── */
+  .gauge-card {
+    background: var(--bg-card); border: 1px solid rgba(2,81,82,0.33); border-radius: 12px;
+    padding: 18px 14px 12px; display: flex; flex-direction: column; align-items: center;
+    position: relative; overflow: hidden; transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  .gauge-card:hover { box-shadow: 0 0 20px rgba(0,158,161,0.08); }
+  .gauge-card .top-line {
+    position: absolute; top: 0; left: 0; right: 0; height: 2px; opacity: 0.6;
+  }
+  .gauge-card .label { margin: 0 0 2px; font-size: 12px; font-weight: 700; color: var(--gray-light); letter-spacing: 0.02em; text-align: center; }
+  .gauge-card .sub { margin: 0; font-size: 10px; color: var(--gray); text-align: center; }
+
+  /* ── Stats Strip ── */
+  .stats-strip {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    background: var(--bg-card); border-radius: 12px; border: 1px solid rgba(2,81,82,0.33);
+    margin-top: 8px; overflow: hidden;
+  }
+  .stat-cell { text-align: center; padding: 14px 8px; }
+  .stat-cell .val { font-size: 24px; font-weight: 900; }
+  .stat-cell .lbl { margin-top: 2px; font-size: 9px; color: var(--gray); letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; }
+
+  /* ── Table ── */
+  .table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid rgba(2,81,82,0.33); }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  thead tr { background: var(--teal); }
+  th {
+    padding: 10px 12px; text-align: left; color: #fff; font-weight: 700;
+    font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
+  }
+  tbody tr { border-bottom: 1px solid rgba(2,81,82,0.2); transition: background 0.15s; }
+  tbody tr:nth-child(even) { background: rgba(2,81,82,0.13); }
+  tbody tr:hover { background: rgba(2,81,82,0.33); }
+  td { padding: 8px 12px; }
+  td.id { color: var(--gray); font-weight: 700; }
+  td.task-name { color: #fff; max-width: 260px; }
+  td.date { color: var(--gray-light); font-size: 10px; }
+  td.dur { color: var(--gray-light); text-align: right; }
+  td.pct { color: var(--teal); font-weight: 700; text-align: right; }
+
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+  }
+  .badge-completed { background: rgba(0,158,161,0.13); color: var(--teal-light); border: 1px solid rgba(0,158,161,0.33); }
+  .review-safety { color: var(--orange); font-size: 10px; font-weight: 700; }
+  .review-env { color: var(--teal-light); font-size: 10px; font-weight: 700; }
+
+  .mbar { display: flex; align-items: center; gap: 8px; }
+  .mbar-track { flex: 1; height: 5px; border-radius: 3px; background: rgba(2,81,82,0.53); }
+  .mbar-fill { height: 100%; border-radius: 3px; transition: width 0.8s; }
+  .mbar-text { font-size: 10px; color: var(--gray-light); min-width: 32px; text-align: right; }
+
+  /* ── Detail panel ── */
+  .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .metrics-card {
+    background: var(--bg-card); border: 1px solid rgba(2,81,82,0.33); border-radius: 12px; padding: 18px;
+  }
+  .metrics-card .title { margin: 0 0 14px; font-size: 12px; font-weight: 700; color: var(--gray-light); letter-spacing: 0.03em; }
+  .metric-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
+  .metric-row .k { font-size: 11px; color: var(--gray); }
+  .metric-row .v { font-size: 14px; font-weight: 900; color: #fff; }
+
+  .section-label { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+  .section-label .bar { width: 4px; height: 18px; border-radius: 2px; }
+  .section-label span { font-size: 11px; font-weight: 700; color: var(--gray-light); letter-spacing: 0.06em; text-transform: uppercase; }
+
+  /* ── Gantt ── */
+  .gantt-section { margin-bottom: 32px; }
+  .gantt-title { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .gantt-title .bar { width: 4px; height: 20px; border-radius: 2px; }
+  .gantt-title h3 { font-size: 14px; font-weight: 900; }
+  .gantt-years { position: relative; height: 20px; margin-bottom: 2px; margin-left: 240px; }
+  .gantt-years span { position: absolute; font-size: 10px; color: var(--gray); font-weight: 700; transform: translateX(-50%); }
+  .gantt-row { display: flex; align-items: center; margin-bottom: 2px; height: 26px; }
+  .gantt-label {
+    width: 230px; flex-shrink: 0; font-size: 11px; color: var(--gray-light); padding-right: 10px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .gantt-label .num { color: var(--gray); font-weight: 700; margin-right: 6px; }
+  .gantt-track { flex: 1; position: relative; height: 18px; background: rgba(2,81,82,0.13); border-radius: 3px; }
+  .gantt-bar { position: absolute; height: 100%; border-radius: 3px; min-width: 4px; }
+
+  /* ── Legend ── */
+  .legend { display: flex; gap: 14px; margin-bottom: 14px; }
+  .legend-item { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--gray-light); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  /* ── Footer ── */
+  .footer { padding: 20px 28px; text-align: center; border-top: 1px solid rgba(2,81,82,0.2); }
+  .footer p { font-size: 10px; color: var(--gray); }
+  .footer .logo-sm span.new { color: var(--teal); font-style: italic; font-weight: 900; }
+  .footer .logo-sm span.cleo { color: var(--orange); font-weight: 900; }
+  .footer .logo-sm { font-family: 'Arial Black', Arial, sans-serif; font-size: 11px; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- HEADER -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div class="header">
+  <div class="header-inner">
+    <div class="header-top">
+      <div>
+        <div class="logo-mark"><span class="new">new</span><span class="cleo">cleo</span></div>
+        <div class="logo-underline"></div>
+      </div>
+      <div class="header-divider"></div>
+      <div class="header-title">
+        <h1>TRISO-X Review Status</h1>
+        <p>NRC Fuel Fabrication Facility — Licensing Review Dashboard</p>
+      </div>
+      <div class="header-meta">
+        <p>Refreshed: <span>3/9/2026</span></p>
+        <p>Modified: <span>2/14/2026</span></p>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="0" data-color="teal" onclick="switchTab(0)">Project Summary</button>
+      <button class="tab-btn" data-tab="1" data-color="orange" onclick="switchTab(1)">Safety &amp; Safeguards</button>
+      <button class="tab-btn" data-tab="2" data-color="teal-light" onclick="switchTab(2)">Environmental Impact</button>
+      <button class="tab-btn" data-tab="3" data-color="nuclear" onclick="switchTab(3)">Timeline</button>
+      <button class="tab-btn" data-tab="4" data-color="gray" onclick="switchTab(4)">Data Table</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- CONTENT -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div class="content">
+
+  <!-- TAB 0: Project Summary -->
+  <div class="tab-panel active" id="tab-0"></div>
+
+  <!-- TAB 1: Safety & Safeguards -->
+  <div class="tab-panel" id="tab-1"></div>
+
+  <!-- TAB 2: Environmental Impact -->
+  <div class="tab-panel" id="tab-2"></div>
+
+  <!-- TAB 3: Timeline -->
+  <div class="tab-panel" id="tab-3"></div>
+
+  <!-- TAB 4: Data Table -->
+  <div class="tab-panel" id="tab-4"></div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- FOOTER -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div class="footer">
+  <p><span class="logo-sm"><span class="new">new</span><span class="cleo">cleo</span></span> — Market Intelligence · Data source: NRC TRISO-X Review Schedule</p>
+</div>
+
+<script>
+// ── DATA ────────────────────────────────────────────────────────────────────
+const DATA = [
+  {id:1,task:"Application Acceptance",status:"Completed",review:"Safety and Safeguards",start:"2022-09-23",end:"2022-11-18",dur:56,mc:7,mt:7},
+  {id:1,task:"ER Acceptance",status:"Completed",review:"Environmental Impact",start:"2022-09-23",end:"2022-11-18",dur:56,mc:4,mt:4},
+  {id:2,task:"Hearing Request",status:"Completed",review:"Safety and Safeguards",start:"2023-02-03",end:"2023-04-04",dur:60,mc:4,mt:4},
+  {id:2,task:"Scoping",status:"Completed",review:"Environmental Impact",start:"2022-08-31",end:"2022-12-30",dur:121,mc:5,mt:5},
+  {id:3,task:"Develop Draft SER, Excluding HITIs",status:"Completed",review:"Safety and Safeguards",start:"2022-12-01",end:"2024-02-26",dur:452,mc:14,mt:14},
+  {id:3,task:"Draft EIS, Original ER",status:"Completed",review:"Environmental Impact",start:"2023-03-01",end:"2024-06-30",dur:487,mc:5,mt:5},
+  {id:4,task:"RAIs, Excluding HITIs",status:"Completed",review:"Safety and Safeguards",start:"2022-12-01",end:"2024-02-26",dur:452,mc:14,mt:14},
+  {id:4,task:"Revised ER",status:"Completed",review:"Environmental Impact",start:"2024-03-01",end:"2025-03-31",dur:395,mc:2,mt:2},
+  {id:5,task:"Response to RAIs, Excluding HITIs",status:"Completed",review:"Safety and Safeguards",start:"2022-12-01",end:"2024-03-27",dur:482,mc:14,mt:14},
+  {id:5,task:"RAIs for the Revised ER",status:"Completed",review:"Environmental Impact",start:"2025-03-31",end:"2025-08-06",dur:128,mc:3,mt:3},
+  {id:6,task:"Draft EIS Publication",status:"Completed",review:"Environmental Impact",start:"2025-03-31",end:"2025-10-31",dur:214,mc:3,mt:3},
+  {id:6,task:"Revised License Application",status:"Completed",review:"Safety and Safeguards",start:"2024-03-27",end:"2025-01-31",dur:310,mc:7,mt:7},
+  {id:7,task:"Draft EIS Comment Period",status:"Completed",review:"Environmental Impact",start:"2025-10-03",end:"2026-01-30",dur:119,mc:5,mt:5},
+  {id:7,task:"Draft SER, Revised Application",status:"Completed",review:"Safety and Safeguards",start:"2025-01-31",end:"2025-11-28",dur:301,mc:7,mt:7},
+  {id:8,task:"Final EIS",status:"Completed",review:"Environmental Impact",start:"2025-11-20",end:"2026-02-13",dur:85,mc:4,mt:4},
+  {id:8,task:"RAIs, Revised Application",status:"Completed",review:"Safety and Safeguards",start:"2025-01-31",end:"2025-08-22",dur:203,mc:7,mt:7},
+  {id:9,task:"EPA Notification",status:"Completed",review:"Environmental Impact",start:"2026-01-19",end:"2026-02-13",dur:25,mc:1,mt:1},
+  {id:9,task:"Responses to RAIs, Revised Application",status:"Completed",review:"Safety and Safeguards",start:"2025-06-01",end:"2025-11-05",dur:157,mc:7,mt:7},
+  {id:10,task:"Division Review of Final Draft SER",status:"Completed",review:"Safety and Safeguards",start:"2026-01-05",end:"2026-02-06",dur:32,mc:20,mt:20},
+  {id:11,task:"Resolution of Comments on Final Draft SER",status:"Completed",review:"Safety and Safeguards",start:"2026-01-12",end:"2026-02-13",dur:32,mc:20,mt:20},
+  {id:12,task:"Complete SER and Licensing Decision",status:"Completed",review:"Safety and Safeguards",start:"2026-01-12",end:"2026-02-13",dur:32,mc:3,mt:3},
+];
+
+const RES = {
+  overall:       { est:18700, chg:16072.50, pct:86 },
+  safety:        { est:13800, chg:13041.75, pct:95 },
+  environmental: { est:4900,  chg:3030.75,  pct:62 },
+};
+
+const safetyData = DATA.filter(d => d.review === "Safety and Safeguards");
+const envData    = DATA.filter(d => d.review === "Environmental Impact");
+
+const sum = (arr, k) => arr.reduce((a, d) => a + d[k], 0);
+const sMC = sum(safetyData,"mc"), sMT = sum(safetyData,"mt");
+const eMC = sum(envData,"mc"),    eMT = sum(envData,"mt");
+const allMC = sMC+eMC, allMT = sMT+eMT;
+
+const TEAL = "#009EA1", TEAL_LT = "#21EAED", TEAL_DK = "#025152";
+const ORANGE = "#ED6C22", GRAY = "#768792", GRAY_LT = "#B4C1CB";
+
+// ── TABS ────────────────────────────────────────────────────────────────────
+function switchTab(i) {
+  document.querySelectorAll('.tab-btn').forEach((b,j) => {
+    b.classList.toggle('active', j===i);
+  });
+  document.querySelectorAll('.tab-panel').forEach((p,j) => {
+    p.classList.toggle('active', j===i);
+    if (j===i) { p.style.animation='none'; p.offsetHeight; p.style.animation='fadeIn 0.4s ease'; }
+  });
+}
+
+// ── SVG GAUGE ───────────────────────────────────────────────────────────────
+function createGaugeSVG(value, color, id) {
+  const r=78, cx=100, cy=93;
+  const sa=-210*Math.PI/180, ea=30*Math.PI/180, sw=ea-sa;
+  const pt = f => { const a=sa+sw*f; return [cx+r*Math.cos(a), cy+r*Math.sin(a)]; };
+  const path = (from,to) => {
+    const pts=[]; for(let i=0;i<=50;i++){const p=pt(from+(to-from)*i/50); pts.push(p.join(","));}
+    return `M ${pts[0]} ${pts.slice(1).map(p=>`L ${p}`).join(" ")}`;
+  };
+  return `<svg viewBox="0 0 200 125" width="190" height="118">
+    <defs>
+      <linearGradient id="gg-${id}" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="${color}" stop-opacity="0.6"/>
+        <stop offset="50%" stop-color="${color}" stop-opacity="1"/>
+        <stop offset="100%" stop-color="${color}" stop-opacity="0.8"/>
+      </linearGradient>
+    </defs>
+    <path d="${path(0,1)}" fill="none" stroke="${TEAL_DK}88" stroke-width="16" stroke-linecap="round"/>
+    <path class="gauge-arc" data-value="${value}" d="${path(0,0.001)}" data-path-fn="true" data-color="${color}"
+          fill="none" stroke="url(#gg-${id})" stroke-width="16" stroke-linecap="round"
+          style="filter:drop-shadow(0 0 12px ${color}44);transition:d 1.4s cubic-bezier(.22,1,.36,1)"/>
+    <text x="${cx}" y="${cy-6}" text-anchor="middle" fill="#fff" font-size="32" font-weight="900" font-family="Arial" class="gauge-text" data-value="${value}">0%</text>
+    <text x="22" y="118" fill="${GRAY}" font-size="10" font-family="Arial">0%</text>
+    <text x="166" y="118" fill="${GRAY}" font-size="10" font-family="Arial">100%</text>
+  </svg>`;
+}
+
+function gaugeCard(value, label, color, subLabel, id) {
+  return `<div class="gauge-card" onmouseenter="this.style.borderColor='${color}44';this.style.boxShadow='0 0 20px ${color}15'"
+    onmouseleave="this.style.borderColor='rgba(2,81,82,0.33)';this.style.boxShadow='none'">
+    <div class="top-line" style="background:linear-gradient(90deg,transparent,${color},transparent)"></div>
+    <p class="label">${label}</p>
+    ${createGaugeSVG(value, color, id)}
+    <p class="sub">${subLabel}</p>
+  </div>`;
+}
+
+// ── TABLE HTML ──────────────────────────────────────────────────────────────
+function tableHTML(data) {
+  const rows = data.map((d,i) => {
+    const isSafety = d.review.includes("Safety");
+    const barColor = isSafety ? ORANGE : TEAL;
+    const pct = d.mt > 0 ? (d.mc/d.mt)*100 : 0;
+    return `<tr>
+      <td class="id">${String(d.id).padStart(2,"0")}</td>
+      <td class="task-name">${d.task}</td>
+      <td><span class="badge badge-completed">${d.status}</span></td>
+      <td class="${isSafety?'review-safety':'review-env'}">${d.review}</td>
+      <td class="date">${d.start}</td>
+      <td class="date">${d.end}</td>
+      <td class="dur">${d.dur}</td>
+      <td style="min-width:100px">
+        <div class="mbar">
+          <div class="mbar-track"><div class="mbar-fill" style="width:${pct}%;background:${barColor}"></div></div>
+          <span class="mbar-text">${d.mc}/${d.mt}</span>
+        </div>
+      </td>
+      <td class="pct">100%</td>
+    </tr>`;
+  }).join("");
+
+  return `<div class="table-wrap"><table>
+    <thead><tr><th>ID</th><th>Task</th><th>Status</th><th>Review Track</th><th>Start</th><th>End</th><th>Days</th><th>Milestones</th><th>%</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+}
+
+// ── REVIEW DETAIL PANEL ─────────────────────────────────────────────────────
+function reviewPanel(data, color, rk, prefix) {
+  const r = RES[rk];
+  const mc = sum(data,"mc"), mt = sum(data,"mt");
+  const avgDur = Math.round(sum(data,"dur")/data.length);
+  const maxDur = Math.max(...data.map(d=>d.dur));
+
+  return `<div class="detail-grid">
+    ${gaugeCard(100, "Review Completion", color, `${data.length} tasks completed`, prefix+"-comp")}
+    ${gaugeCard(r.pct, "Resources Charged", color, `${r.chg.toLocaleString()} / ${r.est.toLocaleString()} hrs`, prefix+"-res")}
+    <div class="metrics-card">
+      <p class="title">Key Metrics</p>
+      <div class="metric-row"><span class="k">Total Tasks</span><span class="v">${data.length}</span></div>
+      <div class="metric-row"><span class="k">Milestones</span><span class="v">${mc} / ${mt}</span></div>
+      <div class="metric-row"><span class="k">Avg Duration</span><span class="v">${avgDur}d</span></div>
+      <div class="metric-row"><span class="k">Longest Task</span><span class="v">${maxDur}d</span></div>
+    </div>
+  </div>
+  <div class="section-label"><div class="bar" style="background:${color}"></div><span>Task Details</span></div>
+  ${tableHTML(data)}`;
+}
+
+// ── GANTT ────────────────────────────────────────────────────────────────────
+function ganttHTML(data, color, label) {
+  const dates = data.flatMap(d => [new Date(d.start), new Date(d.end)]);
+  const mn = Math.min(...dates), mx = Math.max(...dates), tot = mx - mn;
+  const yrs = [];
+  for (let y = new Date(mn).getFullYear(); y <= new Date(mx).getFullYear(); y++) yrs.push(y);
+
+  const yearMarkers = yrs.map(y => {
+    const l = Math.max(0, ((new Date(y,0,1)-mn)/tot)*100);
+    return `<span style="left:${l}%">${y}</span>`;
+  }).join("");
+
+  const rows = data.map(d => {
+    const s = new Date(d.start), e = new Date(d.end);
+    const l = ((s-mn)/tot)*100, w = Math.max(0.5, ((e-s)/tot)*100);
+    return `<div class="gantt-row">
+      <div class="gantt-label"><span class="num">${String(d.id).padStart(2,"0")}</span>${d.task}</div>
+      <div class="gantt-track">
+        <div class="gantt-bar" style="left:${l}%;width:${w}%;background:linear-gradient(90deg,${color}aa,${color});box-shadow:0 0 8px ${color}33" title="${d.start} → ${d.end} (${d.dur}d)"></div>
+      </div>
+    </div>`;
+  }).join("");
+
+  return `<div class="gantt-section">
+    <div class="gantt-title"><div class="bar" style="background:${color}"></div><h3>${label}</h3></div>
+    <div class="gantt-years">${yearMarkers}</div>
+    ${rows}
+  </div>`;
+}
+
+// ── RENDER ALL TABS ─────────────────────────────────────────────────────────
+function renderAll() {
+  // Tab 0 — Summary
+  document.getElementById("tab-0").innerHTML = `
+    <div class="gauge-row">
+      ${gaugeCard(100, "Overall Project Completion", TEAL, `${allMC} / ${allMT} milestones`, "ov-comp")}
+      ${gaugeCard(RES.overall.pct, "Overall Resources Charged", TEAL, `${RES.overall.chg.toLocaleString()} / ${RES.overall.est.toLocaleString()} hrs`, "ov-res")}
+    </div>
+    <div class="gauge-row">
+      ${gaugeCard(100, "Safety &amp; Safeguards Review", ORANGE, `${sMC} / ${sMT} milestones`, "sf-comp")}
+      ${gaugeCard(RES.safety.pct, "Safety &amp; Safeguards Resources", ORANGE, `${RES.safety.chg.toLocaleString()} / ${RES.safety.est.toLocaleString()} hrs`, "sf-res")}
+    </div>
+    <div class="gauge-row">
+      ${gaugeCard(100, "Environmental Impact Review", TEAL_LT, `${eMC} / ${eMT} milestones`, "ev-comp")}
+      ${gaugeCard(RES.environmental.pct, "Environmental Impact Resources", TEAL_LT, `${RES.environmental.chg.toLocaleString()} / ${RES.environmental.est.toLocaleString()} hrs`, "ev-res")}
+    </div>
+    <div class="stats-strip">
+      <div class="stat-cell"><div class="val" style="color:#fff">${DATA.length}</div><div class="lbl">Total Tasks</div></div>
+      <div class="stat-cell"><div class="val" style="color:${TEAL}">${DATA.filter(d=>d.status==="Completed").length}</div><div class="lbl">Completed</div></div>
+      <div class="stat-cell"><div class="val" style="color:${ORANGE}">${safetyData.length}</div><div class="lbl">Safety Tasks</div></div>
+      <div class="stat-cell"><div class="val" style="color:${TEAL_LT}">${envData.length}</div><div class="lbl">Environmental</div></div>
+      <div class="stat-cell"><div class="val" style="color:#6D648E">~3.5 yrs</div><div class="lbl">Duration</div></div>
+      <div class="stat-cell"><div class="val" style="color:${TEAL}">${allMC}</div><div class="lbl">Milestones</div></div>
+    </div>`;
+
+  // Tab 1 — Safety
+  document.getElementById("tab-1").innerHTML = reviewPanel(safetyData, ORANGE, "safety", "sf");
+
+  // Tab 2 — Environmental
+  document.getElementById("tab-2").innerHTML = reviewPanel(envData, TEAL_LT, "environmental", "ev");
+
+  // Tab 3 — Timeline
+  document.getElementById("tab-3").innerHTML =
+    ganttHTML(safetyData, ORANGE, "Safety and Safeguards") +
+    ganttHTML(envData, TEAL_LT, "Environmental Impact");
+
+  // Tab 4 — Data Table
+  document.getElementById("tab-4").innerHTML = `
+    <div class="legend">
+      <span class="legend-item"><span class="legend-dot" style="background:${ORANGE};box-shadow:0 0 6px ${ORANGE}44"></span>Safety &amp; Safeguards</span>
+      <span class="legend-item"><span class="legend-dot" style="background:${TEAL_LT};box-shadow:0 0 6px ${TEAL_LT}44"></span>Environmental Impact</span>
+    </div>
+    ${tableHTML(DATA)}`;
+
+  // Animate gauges
+  requestAnimationFrame(() => animateGauges());
+}
+
+// ── GAUGE ANIMATION ─────────────────────────────────────────────────────────
+function animateGauges() {
+  const r=78, cx=100, cy=93;
+  const sa=-210*Math.PI/180, ea=30*Math.PI/180, sw=ea-sa;
+  const pt = f => { const a=sa+sw*f; return [cx+r*Math.cos(a), cy+r*Math.sin(a)]; };
+  const pathD = (from,to) => {
+    const pts=[]; for(let i=0;i<=50;i++){const p=pt(from+(to-from)*i/50); pts.push(p.join(","));}
+    return `M ${pts[0]} ${pts.slice(1).map(p=>`L ${p}`).join(" ")}`;
+  };
+
+  document.querySelectorAll('.gauge-arc').forEach(arc => {
+    const val = parseFloat(arc.dataset.value);
+    const textEl = arc.parentElement.querySelector('.gauge-text');
+    arc.setAttribute('d', pathD(0, val/100));
+
+    // Animate number
+    const start = performance.now();
+    const tick = (now) => {
+      const t = Math.min((now-start)/1400, 1);
+      const ease = 1 - Math.pow(1-t, 3);
+      textEl.textContent = Math.round(ease * val) + '%';
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+}
+
+// Observer for tab switches to re-animate
+const observer = new MutationObserver(() => {
+  setTimeout(animateGauges, 50);
+});
+document.querySelectorAll('.tab-panel').forEach(p => {
+  observer.observe(p, { attributes: true, attributeFilter: ['class'] });
+});
+
+// ── INIT ────────────────────────────────────────────────────────────────────
+renderAll();
+</script>
+</body>
+</html>
