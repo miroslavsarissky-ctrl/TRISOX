@@ -131,6 +131,26 @@
   .hero-mini .s { margin-top: 4px; color: var(--gray-light); font-size: 11px; line-height: 1.35; }
 
   .summary-stack { display: grid; gap: 16px; }
+  .fuel-visual-card {
+    padding: 12px;
+    background: linear-gradient(180deg, rgba(109,100,142,0.18), rgba(13,34,34,1));
+  }
+  .fuel-viz-wrap {
+    height: 220px;
+    border-radius: 12px;
+    border: 1px solid rgba(109,100,142,0.45);
+    background: radial-gradient(circle at 30% 20%, rgba(33,234,237,0.12), rgba(7,20,20,0.95));
+    overflow: hidden;
+    cursor: grab;
+  }
+  .fuel-viz-wrap:active { cursor: grabbing; }
+  .fuel-viz-caption {
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--gray-light);
+    line-height: 1.4;
+  }
+
 
   .section-label, .gantt-title {
     display: flex;
@@ -423,6 +443,7 @@
   <p><span class="logo-sm"><span class="new">new</span><span class="cleo">cleo</span></span> — Market Intelligence · Primary source set updated to reflect license issuance and post-license conditions</p>
 </div>
 
+<script src="https://unpkg.com/three@0.161.0/build/three.min.js"></script>
 <script>
 const DATA = [
   {id:1,task:"Application Acceptance",status:"Completed",review:"Safety and Safeguards",start:"2022-09-23",end:"2022-11-18",dur:56,mc:7,mt:7},
@@ -719,11 +740,9 @@ function renderOverview() {
         </div>
       </div>
       <div class="summary-stack">
-        <div class="hero-card" style="background:linear-gradient(180deg, rgba(109,100,142,0.20), rgba(13,34,34,1));">
-          <div class="status-chip"><span class="status-dot"></span>Headline</div>
-          <h2 style="font-size:22px; max-width:none;">What this page should now answer</h2>
-          <p style="font-size:13px;">Not “is the application still under review?” but “what changed, what gates remain before uranium is introduced, and how quickly can TX-1 turn a license win into operating reality?”</p>
-          <div class="callout" style="margin-top:14px; border-left-color: var(--nuclear); background: rgba(109,100,142,0.10);">${STATUS.commercialContext}</div>
+        <div class="hero-card fuel-visual-card">
+          <div id="fuel-viz" class="fuel-viz-wrap" aria-label="Interactive 3D TRISO-X fuel visualization"></div>
+          <p class="fuel-viz-caption">Interactive TRISO fuel particle model inspired by X-energy TRISO-X layered fuel construction. Drag to rotate.</p>
         </div>
       </div>
     </div>
@@ -814,6 +833,7 @@ function renderAll() {
     ${tableHTML(DATA)}`;
 
   requestAnimationFrame(() => animateGauges());
+  requestAnimationFrame(() => initFuelVisualization());
 }
 
 function animateGauges() {
@@ -838,6 +858,119 @@ function animateGauges() {
     };
     requestAnimationFrame(tick);
   });
+}
+
+
+let fuelVizRuntime = null;
+
+function initFuelVisualization() {
+  const mount = document.getElementById('fuel-viz');
+  if (!mount) {
+    if (fuelVizRuntime) {
+      cancelAnimationFrame(fuelVizRuntime.raf);
+      fuelVizRuntime.renderer.dispose();
+      fuelVizRuntime = null;
+    }
+    return;
+  }
+
+  if (!window.THREE) {
+    mount.textContent = '3D visualization unavailable in this environment.';
+    return;
+  }
+
+  const { THREE } = window;
+  if (fuelVizRuntime) {
+    cancelAnimationFrame(fuelVizRuntime.raf);
+    fuelVizRuntime.renderer.dispose();
+    fuelVizRuntime = null;
+  }
+  mount.innerHTML = '';
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(38, mount.clientWidth / mount.clientHeight, 0.1, 100);
+  camera.position.set(0, 0.25, 4.3);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setSize(mount.clientWidth, mount.clientHeight);
+  mount.appendChild(renderer.domElement);
+
+  const ambient = new THREE.AmbientLight(0x8cb5c0, 0.7);
+  const key = new THREE.DirectionalLight(0x21eaed, 0.9);
+  key.position.set(2.6, 2.8, 3.2);
+  const rim = new THREE.DirectionalLight(0x6d648e, 0.65);
+  rim.position.set(-2.2, -1.2, -2.6);
+  scene.add(ambient, key, rim);
+
+  const fuel = new THREE.Group();
+  scene.add(fuel);
+
+  const kernel = new THREE.Mesh(
+    new THREE.SphereGeometry(0.62, 48, 48),
+    new THREE.MeshStandardMaterial({ color: 0xed6c22, roughness: 0.44, metalness: 0.16 })
+  );
+  fuel.add(kernel);
+
+  const layers = [
+    { r: 0.86, c: 0x1e2f3f, o: 0.32 },
+    { r: 1.05, c: 0x768792, o: 0.25 },
+    { r: 1.22, c: 0x6d648e, o: 0.18 },
+    { r: 1.38, c: 0x21eaed, o: 0.11 }
+  ];
+
+  layers.forEach(({ r, c, o }) => {
+    fuel.add(new THREE.Mesh(
+      new THREE.SphereGeometry(r, 48, 48),
+      new THREE.MeshStandardMaterial({ color: c, transparent: true, opacity: o, roughness: 0.35, metalness: 0.05, side: THREE.DoubleSide })
+    ));
+  });
+
+  const shellGeom = new THREE.SphereGeometry(1.28, 20, 20);
+  const shellMat = new THREE.MeshStandardMaterial({ color: 0x009ea1, wireframe: true, transparent: true, opacity: 0.33 });
+  fuel.add(new THREE.Mesh(shellGeom, shellMat));
+
+  let targetX = 0.32;
+  let targetY = 0.2;
+  let isDown = false;
+  let lastX = 0;
+  let lastY = 0;
+
+  const onDown = (e) => { isDown = true; lastX = e.clientX; lastY = e.clientY; };
+  const onUp = () => { isDown = false; };
+  const onMove = (e) => {
+    if (!isDown) return;
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
+    targetY += dx * 0.008;
+    targetX += dy * 0.008;
+    targetX = Math.max(-0.8, Math.min(0.8, targetX));
+    lastX = e.clientX;
+    lastY = e.clientY;
+  };
+
+  mount.addEventListener('pointerdown', onDown);
+  window.addEventListener('pointerup', onUp);
+  window.addEventListener('pointermove', onMove);
+
+  const onResize = () => {
+    if (!mount.clientWidth || !mount.clientHeight) return;
+    camera.aspect = mount.clientWidth / mount.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(mount.clientWidth, mount.clientHeight);
+  };
+  window.addEventListener('resize', onResize);
+
+  const animate = () => {
+    fuel.rotation.y += 0.005;
+    fuel.rotation.x += (targetX - fuel.rotation.x) * 0.06;
+    fuel.rotation.y += (targetY - fuel.rotation.y) * 0.06;
+    renderer.render(scene, camera);
+    fuelVizRuntime.raf = requestAnimationFrame(animate);
+  };
+
+  fuelVizRuntime = { renderer, raf: 0 };
+  animate();
 }
 
 const observer = new MutationObserver(() => setTimeout(animateGauges, 50));
