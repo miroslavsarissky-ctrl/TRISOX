@@ -473,7 +473,6 @@
   <p><span class="logo-sm"><span class="new">new</span><span class="cleo">cleo</span></span> — Market Intelligence · Primary source set updated to reflect license issuance and post-license conditions</p>
 </div>
 
-<script src="https://unpkg.com/three@0.161.0/build/three.min.js"></script>
 <script>
 const DATA = [
   {id:1,task:"Application Acceptance",status:"Completed",review:"Safety and Safeguards",start:"2022-09-23",end:"2022-11-18",dur:56,mc:7,mt:7},
@@ -870,7 +869,14 @@ function renderAll() {
     ${tableHTML(DATA)}`;
 
   requestAnimationFrame(() => animateGauges());
-  requestAnimationFrame(() => initFuelVisualization());
+  requestAnimationFrame(async () => {
+    try {
+      await ensureThreeLoaded();
+    } catch (err) {
+      // fallback renderer will be used
+    }
+    initFuelVisualization();
+  });
 }
 
 function animateGauges() {
@@ -898,7 +904,159 @@ function animateGauges() {
 }
 
 
+
 let fuelVizRuntime = null;
+let threeLoaderPromise = null;
+
+function loadScriptOnce(src) {
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector(`script[data-src="${src}"]`);
+    if (existing) {
+      if (existing.dataset.loaded === 'true') { resolve(); return; }
+      existing.addEventListener('load', () => resolve(), { once: true });
+      existing.addEventListener('error', () => reject(new Error(`Failed to load ${src}`)), { once: true });
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = true;
+    script.defer = true;
+    script.dataset.src = src;
+    script.onload = () => { script.dataset.loaded = 'true'; resolve(); };
+    script.onerror = () => reject(new Error(`Failed to load ${src}`));
+    document.head.appendChild(script);
+  });
+}
+
+function ensureThreeLoaded() {
+  if (window.THREE) return Promise.resolve(window.THREE);
+  if (threeLoaderPromise) return threeLoaderPromise;
+
+  const sources = [
+    'https://unpkg.com/three@0.161.0/build/three.min.js',
+    'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/three.js/r161/three.min.js'
+  ];
+
+  threeLoaderPromise = (async () => {
+    for (const src of sources) {
+      try {
+        await loadScriptOnce(src);
+        if (window.THREE) return window.THREE;
+      } catch (err) {
+        // try next CDN mirror
+      }
+    }
+    throw new Error('Unable to load Three.js from CDN mirrors.');
+  })();
+
+  return threeLoaderPromise;
+}
+
+function renderFallbackFuelViz(mount) {
+  mount.innerHTML = '';
+  const canvas = document.createElement('canvas');
+  canvas.style.width = '100%';
+  canvas.style.height = '100%';
+  canvas.style.display = 'block';
+  mount.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  layers.forEach((l, idx) => {
+    const phiStart = idx === 0 ? 0.42 : 0.55;
+    const phiLength = Math.PI * 1.58;
+    const geom = new THREE.SphereGeometry(l.r, 96, 96, phiStart, phiLength);
+    const mat = new THREE.MeshPhysicalMaterial({
+      color: l.color,
+      metalness: l.metalness,
+      roughness: l.roughness,
+      clearcoat: 1,
+      clearcoatRoughness: 0.14,
+      sheen: 0.35,
+      sheenColor: new THREE.Color(0xdbe4ed),
+      side: THREE.DoubleSide
+    });
+    const mesh = new THREE.Mesh(geom, mat);
+    particle.add(mesh);
+  });
+
+  const halo = new THREE.Mesh(
+    new THREE.TorusGeometry(1.02, 0.012, 20, 140),
+    new THREE.MeshBasicMaterial({ color: 0x21eaed, transparent: true, opacity: 0.35 })
+  );
+  halo.rotation.x = Math.PI * 0.5;
+  particle.add(halo);
+
+  let yaw = 0.65;
+  let pitch = -0.22;
+  let dragging = false;
+  let lx = 0;
+  let ly = 0;
+
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = Math.max(1, mount.clientWidth);
+    const h = Math.max(1, mount.clientHeight);
+    canvas.width = Math.floor(w * dpr);
+    canvas.height = Math.floor(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  const rings = [
+    { r: 0.78, c: '#1d242a', a: 1 },
+    { r: 0.64, c: '#b7c3ce', a: 0.95 },
+    { r: 0.52, c: '#8c97a2', a: 0.95 },
+    { r: 0.40, c: '#67737f', a: 0.95 },
+    { r: 0.28, c: '#f2f4f8', a: 1 }
+  ];
+
+  function draw(t) {
+    const w = mount.clientWidth;
+    const h = mount.clientHeight;
+    ctx.clearRect(0,0,w,h);
+    const cx = w*0.5, cy = h*0.52;
+    const base = Math.min(w,h)*0.52;
+
+    const glow = ctx.createRadialGradient(cx-base*0.3, cy-base*0.4, 1, cx, cy, base*1.2);
+    glow.addColorStop(0,'rgba(255,255,255,0.45)');
+    glow.addColorStop(0.5,'rgba(33,234,237,0.18)');
+    glow.addColorStop(1,'rgba(5,15,15,0.02)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0,0,w,h);
+
+    const wobble = Math.sin(t*0.0012) * 0.09;
+    rings.forEach((ring, i) => {
+      const rx = base * ring.r;
+      const ry = rx * (0.82 + wobble*0.15);
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2);
+      const g = ctx.createRadialGradient(cx-rx*0.35, cy-ry*0.36, 1, cx, cy, rx);
+      g.addColorStop(0, ring.c + 'ff');
+      g.addColorStop(1, ring.c + (i===0 ? '66':'2e'));
+      ctx.fillStyle = g;
+      ctx.fill();
+    });
+
+    ctx.strokeStyle = 'rgba(230,240,250,0.48)';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, base*0.78, -0.9, 2.35);
+    ctx.stroke();
+
+    fuelVizRuntime.raf = requestAnimationFrame(draw);
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+  fuelVizRuntime = {
+    raf: requestAnimationFrame(draw),
+    cleanup: () => {
+      window.removeEventListener('resize', resize);
+      if (fuelVizRuntime?.raf) cancelAnimationFrame(fuelVizRuntime.raf);
+    }
+  };
+}
 
 function initFuelVisualization() {
   const mount = document.getElementById('fuel-viz');
@@ -909,8 +1067,11 @@ function initFuelVisualization() {
     return;
   }
 
+  if (fuelVizRuntime?.raf) cancelAnimationFrame(fuelVizRuntime.raf);
+  if (fuelVizRuntime?.cleanup) fuelVizRuntime.cleanup();
+
   if (!window.THREE) {
-    mount.textContent = 'Interactive 3D visualization unavailable in this browser.';
+    renderFallbackFuelViz(mount);
     return;
   }
 
