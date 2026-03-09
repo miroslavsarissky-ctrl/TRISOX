@@ -155,11 +155,6 @@
     height: 100%;
     pointer-events: none;
   }
-  .fuel-viz-overlay text {
-    fill: #d8e4ea;
-    font-size: 10px;
-    font-weight: 700;
-  }
   .fuel-viz-wrap:active { cursor: grabbing; }
   .fuel-viz-caption {
     margin-top: 8px;
@@ -167,35 +162,35 @@
     color: var(--gray-light);
     line-height: 1.4;
   }
-  .fuel-descriptors {
+  .fuel-legend {
     margin-top: 10px;
-    display: grid;
+    display: flex;
+    flex-wrap: wrap;
     gap: 8px;
   }
-  .fuel-descriptor {
-    display: grid;
-    grid-template-columns: 9px 1fr;
-    gap: 10px;
-    align-items: start;
+  .fuel-legend-btn {
+    border: 1px solid rgba(109,100,142,0.35);
     background: rgba(7,20,20,0.55);
-    border: 1px solid rgba(109,100,142,0.25);
-    border-radius: 9px;
-    padding: 8px 10px;
-    font-size: 11px;
     color: var(--gray-light);
-  }
-  .fuel-descriptor strong {
-    display: block;
-    color: #fff;
+    border-radius: 999px;
+    padding: 6px 10px;
     font-size: 11px;
-    margin-bottom: 2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
   }
-  .fuel-descriptor i {
+  .fuel-legend-btn.active {
+    color: #fff;
+    border-color: rgba(33,234,237,0.6);
+    box-shadow: 0 0 12px rgba(33,234,237,0.18);
+  }
+  .fuel-legend-dot {
     width: 9px;
     height: 9px;
     border-radius: 50%;
-    margin-top: 3px;
-    box-shadow: 0 0 10px currentColor;
+    box-shadow: 0 0 8px currentColor;
+    flex: 0 0 auto;
   }
 
 
@@ -789,26 +784,15 @@ function renderOverview() {
         <div class="hero-card fuel-visual-card">
           <div class="fuel-viz-wrap" aria-label="Interactive 3D TRISO-X fuel visualization">
             <div id="fuel-viz" class="fuel-viz-stage"></div>
-            <svg class="fuel-viz-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-              <line x1="33" y1="27" x2="56" y2="20" stroke="rgba(242,244,248,0.75)" stroke-width="0.7" />
-              <line x1="36" y1="38" x2="59" y2="34" stroke="rgba(103,115,127,0.75)" stroke-width="0.7" />
-              <line x1="39" y1="49" x2="61" y2="47" stroke="rgba(140,151,162,0.75)" stroke-width="0.7" />
-              <line x1="38" y1="60" x2="62" y2="61" stroke="rgba(183,195,206,0.75)" stroke-width="0.7" />
-              <line x1="34" y1="72" x2="58" y2="75" stroke="rgba(29,36,42,0.95)" stroke-width="0.9" />
-              <text x="60" y="20">Fuel kernel</text>
-              <text x="62" y="34">Porous carbon buffer</text>
-              <text x="64" y="47">Inner pyrolytic carbon</text>
-              <text x="64" y="61">Silicon carbide</text>
-              <text x="60" y="76">Outer pyrolytic carbon</text>
-            </svg>
+
           </div>
           <p class="fuel-viz-caption">Interactive TRISO fuel particle model with metallic cutaway and engineering layer descriptors. Drag to rotate.</p>
-          <div class="fuel-descriptors" aria-label="TRISO fuel layer descriptors">
-            <div class="fuel-descriptor"><i style="color:#f2f4f8;background:#f2f4f8"></i><div><strong>Fuel Kernel (UCO/UO₂)</strong>Dense fissile core that generates heat.</div></div>
-            <div class="fuel-descriptor"><i style="color:#67737f;background:#67737f"></i><div><strong>Porous Carbon Buffer</strong>Absorbs fission gas and kernel swelling.</div></div>
-            <div class="fuel-descriptor"><i style="color:#8c97a2;background:#8c97a2"></i><div><strong>Inner Pyrolytic Carbon</strong>Structural carbon interface around the buffer.</div></div>
-            <div class="fuel-descriptor"><i style="color:#b7c3ce;background:#b7c3ce"></i><div><strong>Silicon Carbide</strong>Primary pressure boundary and metallic barrier layer.</div></div>
-            <div class="fuel-descriptor"><i style="color:#1d242a;background:#1d242a"></i><div><strong>Outer Pyrolytic Carbon</strong>Protective outer shell for handling and compaction.</div></div>
+          <div class="fuel-legend" aria-label="TRISO fuel layer legend">
+            <button type="button" class="fuel-legend-btn" data-layer="0"><span class="fuel-legend-dot" style="color:#ff5f42;background:#ff5f42"></span>Fuel Kernel</button>
+            <button type="button" class="fuel-legend-btn" data-layer="1"><span class="fuel-legend-dot" style="color:#ffb347;background:#ffb347"></span>Porous Buffer</button>
+            <button type="button" class="fuel-legend-btn" data-layer="2"><span class="fuel-legend-dot" style="color:#44d1c5;background:#44d1c5"></span>Inner PyC</button>
+            <button type="button" class="fuel-legend-btn" data-layer="3"><span class="fuel-legend-dot" style="color:#5aa6ff;background:#5aa6ff"></span>SiC Layer</button>
+            <button type="button" class="fuel-legend-btn" data-layer="4"><span class="fuel-legend-dot" style="color:#8a7dff;background:#8a7dff"></span>Outer PyC</button>
           </div>
         </div>
       </div>
@@ -885,6 +869,26 @@ function renderSources() {
   <div class="source-grid">${cards}</div>`;
 }
 
+const FUEL_LAYER_COLORS = ['#ff5f42', '#ffb347', '#44d1c5', '#5aa6ff', '#8a7dff'];
+let activeFuelLayer = -1;
+
+function initFuelLegend() {
+  const buttons = Array.from(document.querySelectorAll('.fuel-legend-btn'));
+  if (!buttons.length) return;
+  buttons.forEach((btn) => {
+    const idx = Number(btn.dataset.layer);
+    btn.classList.toggle('active', idx === activeFuelLayer);
+    btn.onclick = () => {
+      activeFuelLayer = activeFuelLayer === idx ? -1 : idx;
+      initFuelLegend();
+    };
+  });
+}
+
+function layerAlpha(idx, dim = 0.2) {
+  return activeFuelLayer === -1 || activeFuelLayer === idx ? 1 : dim;
+}
+
 function renderAll() {
   document.getElementById('tab-0').innerHTML = renderOverview();
   document.getElementById('tab-1').innerHTML = renderReadiness();
@@ -899,6 +903,7 @@ function renderAll() {
     </div>
     ${tableHTML(DATA)}`;
 
+  initFuelLegend();
   requestAnimationFrame(() => animateGauges());
   requestAnimationFrame(async () => {
     try {
@@ -1010,11 +1015,11 @@ function renderFallbackFuelViz(mount) {
   }
 
   const rings = [
-    { r: 0.80, c: '#1d242a', edge: 'rgba(210,220,232,0.22)' },
-    { r: 0.66, c: '#bfc9d4', edge: 'rgba(240,245,255,0.34)' },
-    { r: 0.53, c: '#8f9aa6', edge: 'rgba(220,230,240,0.28)' },
-    { r: 0.40, c: '#67737f', edge: 'rgba(210,220,235,0.24)' },
-    { r: 0.27, c: '#f2f4f8', edge: 'rgba(255,255,255,0.42)' }
+    { r: 0.80, c: '#8a7dff', edge: 'rgba(190,178,255,0.36)' },
+    { r: 0.66, c: '#5aa6ff', edge: 'rgba(155,202,255,0.34)' },
+    { r: 0.53, c: '#44d1c5', edge: 'rgba(125,235,227,0.32)' },
+    { r: 0.40, c: '#ffb347', edge: 'rgba(255,202,126,0.32)' },
+    { r: 0.27, c: '#ff5f42', edge: 'rgba(255,135,116,0.38)' }
   ];
 
   function draw() {
@@ -1036,11 +1041,13 @@ function renderFallbackFuelViz(mount) {
 
     const cut = 0.48 + Math.sin(yaw) * 0.16;
     rings.forEach((ring, i) => {
+      const alpha = layerAlpha(4 - i, 0.16);
       const rx = base * ring.r;
       const ry = rx * squash;
       const xShift = Math.sin(yaw * 0.9) * (i * 1.5);
 
       ctx.save();
+      ctx.globalAlpha = alpha;
       ctx.beginPath();
       ctx.rect(cx - rx * cut, cy - ry - 5, rx * (1 + cut), ry * 2 + 10);
       ctx.clip();
@@ -1149,11 +1156,11 @@ function initFuelVisualization() {
   scene.add(particle);
 
   const layers = [
-    { r: 0.82, color: 0x1d242a, metalness: 0.65, roughness: 0.22 },
-    { r: 0.67, color: 0xb7c3ce, metalness: 0.96, roughness: 0.18 },
-    { r: 0.54, color: 0x8c97a2, metalness: 0.74, roughness: 0.3 },
-    { r: 0.42, color: 0x67737f, metalness: 0.62, roughness: 0.44 },
-    { r: 0.29, color: 0xf2f4f8, metalness: 0.18, roughness: 0.34 }
+    { key: 4, r: 0.82, color: 0x8a7dff, metalness: 0.58, roughness: 0.26 },
+    { key: 3, r: 0.67, color: 0x5aa6ff, metalness: 0.72, roughness: 0.22 },
+    { key: 2, r: 0.54, color: 0x44d1c5, metalness: 0.62, roughness: 0.28 },
+    { key: 1, r: 0.42, color: 0xffb347, metalness: 0.52, roughness: 0.38 },
+    { key: 0, r: 0.29, color: 0xff5f42, metalness: 0.2, roughness: 0.34 }
   ];
 
   layers.forEach((l, idx) => {
@@ -1168,9 +1175,12 @@ function initFuelVisualization() {
       clearcoatRoughness: 0.14,
       sheen: 0.35,
       sheenColor: new THREE.Color(0xdbe4ed),
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 1
     });
     const mesh = new THREE.Mesh(geom, mat);
+    mesh.userData.layerKey = l.key;
     particle.add(mesh);
   });
 
@@ -1200,6 +1210,11 @@ function initFuelVisualization() {
     particle.rotation.x += (pitch - particle.rotation.x) * 0.08;
     particle.rotation.z = Math.sin(performance.now() * 0.00045) * 0.06;
     halo.rotation.z += 0.01;
+    particle.children.forEach((child) => {
+      if (!child.material || typeof child.userData.layerKey !== 'number') return;
+      const a = layerAlpha(child.userData.layerKey, 0.16);
+      child.material.opacity += (a - child.material.opacity) * 0.15;
+    });
     yaw += 0.003;
     fuelVizRuntime.raf = requestAnimationFrame(render);
     renderer.render(scene, camera);
