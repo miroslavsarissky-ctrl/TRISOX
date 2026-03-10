@@ -156,6 +156,7 @@
     pointer-events: none;
   }
   .fuel-viz-wrap:active { cursor: grabbing; }
+  .fuel-static-img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .fuel-viz-caption {
     margin-top: 8px;
     font-size: 11px;
@@ -782,18 +783,10 @@ function renderOverview() {
       </div>
       <div class="summary-stack">
         <div class="hero-card fuel-visual-card">
-          <div class="fuel-viz-wrap" aria-label="Interactive 3D TRISO-X fuel visualization">
-            <div id="fuel-viz" class="fuel-viz-stage"></div>
-
+          <div class="fuel-viz-wrap" aria-label="TRISO-X particle structure image">
+            <img class="fuel-static-img" src="triso-structure.svg" alt="TRISO-X multi-layer particle with labeled kernel, buffer, inner pyrolytic carbon, silicon carbide, and outer pyrolytic carbon layers" />
           </div>
-          <p class="fuel-viz-caption">Interactive TRISO fuel particle model with metallic cutaway and engineering layer descriptors. Drag to rotate.</p>
-          <div class="fuel-legend" aria-label="TRISO fuel layer legend">
-            <button type="button" class="fuel-legend-btn" data-layer="0"><span class="fuel-legend-dot" style="color:#ff5f42;background:#ff5f42"></span>Fuel Kernel</button>
-            <button type="button" class="fuel-legend-btn" data-layer="1"><span class="fuel-legend-dot" style="color:#ffb347;background:#ffb347"></span>Porous Buffer</button>
-            <button type="button" class="fuel-legend-btn" data-layer="2"><span class="fuel-legend-dot" style="color:#44d1c5;background:#44d1c5"></span>Inner PyC</button>
-            <button type="button" class="fuel-legend-btn" data-layer="3"><span class="fuel-legend-dot" style="color:#5aa6ff;background:#5aa6ff"></span>SiC Layer</button>
-            <button type="button" class="fuel-legend-btn" data-layer="4"><span class="fuel-legend-dot" style="color:#8a7dff;background:#8a7dff"></span>Outer PyC</button>
-          </div>
+          <p class="fuel-viz-caption">Static TRISO-X structure reference image showing the fuel kernel and containment layers.</p>
         </div>
       </div>
     </div>
@@ -905,14 +898,6 @@ function renderAll() {
 
   initFuelLegend();
   requestAnimationFrame(() => animateGauges());
-  requestAnimationFrame(async () => {
-    try {
-      await ensureThreeLoaded();
-    } catch (err) {
-      // fallback renderer will be used
-    }
-    initFuelVisualization();
-  });
 }
 
 function animateGauges() {
