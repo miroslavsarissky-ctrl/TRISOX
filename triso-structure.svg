@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+  <title id="title">TRISO-X multi-layer particle structure</title>
+  <desc id="desc">Static cutaway picture of a TRISO fuel particle with labeled layers.</desc>
+  <defs>
+    <radialGradient id="bg" cx="30%" cy="20%" r="90%">
+      <stop offset="0%" stop-color="#f7f7f7"/>
+      <stop offset="100%" stop-color="#d8d8d8"/>
+    </radialGradient>
+    <radialGradient id="shell" cx="35%" cy="28%" r="70%">
+      <stop offset="0%" stop-color="#8d8f94"/>
+      <stop offset="55%" stop-color="#4d5158"/>
+      <stop offset="100%" stop-color="#262a31"/>
+    </radialGradient>
+    <radialGradient id="kernel" cx="42%" cy="35%" r="70%">
+      <stop offset="0%" stop-color="#ffd9b0"/>
+      <stop offset="100%" stop-color="#b9541f"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="700" fill="url(#bg)"/>
+
+  <text x="600" y="58" text-anchor="middle" font-family="Arial, sans-serif" font-size="52" font-weight="700" fill="#111">TRISO-X Multi-layer Particle Structure</text>
+
+  <g transform="translate(645,370)">
+    <circle r="255" fill="url(#shell)"/>
+    <path d="M-30,-250 A252,252 0 0 1 236,-90 L58,-27 A75,75 0 0 0 -10,-75 Z" fill="#2f343b" opacity="0.9"/>
+    <path d="M-16,-218 A220,220 0 0 1 205,-80 L48,-22 A63,63 0 0 0 -6,-63 Z" fill="#6269a8"/>
+    <path d="M-4,-185 A188,188 0 0 1 174,-67 L37,-16 A52,52 0 0 0 0,-50 Z" fill="#57a2ec"/>
+    <path d="M7,-156 A159,159 0 0 1 146,-56 L30,-11 A42,42 0 0 0 5,-36 Z" fill="#48cfc6"/>
+    <path d="M14,-130 A132,132 0 0 1 120,-45 L22,-7 A34,34 0 0 0 9,-25 Z" fill="#f6b35a"/>
+    <circle r="88" fill="url(#kernel)"/>
+    <circle r="88" fill="none" stroke="#7a2c10" stroke-width="3" opacity="0.45"/>
+  </g>
+
+  <g font-family="Arial, sans-serif" font-size="30" fill="#1c1d1f" font-weight="700">
+    <line x1="775" y1="130" x2="1020" y2="70" stroke="#2f343b" stroke-width="3"/>
+    <text x="1030" y="78">Outer Pyrolytic Carbon</text>
+
+    <line x1="770" y1="182" x2="1030" y2="150" stroke="#6269a8" stroke-width="3"/>
+    <text x="1040" y="158">Silicon Carbide (SiC)</text>
+
+    <line x1="760" y1="233" x2="1015" y2="232" stroke="#57a2ec" stroke-width="3"/>
+    <text x="1025" y="240">Inner Pyrolytic Carbon</text>
+
+    <line x1="748" y1="284" x2="995" y2="312" stroke="#48cfc6" stroke-width="3"/>
+    <text x="1005" y="322">Porous Carbon Buffer</text>
+
+    <line x1="720" y1="356" x2="960" y2="402" stroke="#f6b35a" stroke-width="3"/>
+    <text x="970" y="412">Fuel Kernel (UCO/UO₂)</text>
+  </g>
+</svg>
