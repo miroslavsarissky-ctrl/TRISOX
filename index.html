@@ -137,61 +137,17 @@
   }
   .fuel-viz-wrap {
     position: relative;
-    height: 220px;
     border-radius: 12px;
     border: 1px solid rgba(109,100,142,0.45);
-    background: radial-gradient(circle at 30% 20%, rgba(33,234,237,0.12), rgba(7,20,20,0.95));
+    background: #e8e8e8;
     overflow: hidden;
-    cursor: grab;
   }
-  .fuel-viz-stage {
-    position: absolute;
-    inset: 0;
-  }
-  .fuel-viz-overlay {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-  }
-  .fuel-viz-wrap:active { cursor: grabbing; }
-  .fuel-static-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .fuel-static-img { width: 100%; height: auto; object-fit: contain; display: block; }
   .fuel-viz-caption {
     margin-top: 8px;
     font-size: 11px;
     color: var(--gray-light);
     line-height: 1.4;
-  }
-  .fuel-legend {
-    margin-top: 10px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .fuel-legend-btn {
-    border: 1px solid rgba(109,100,142,0.35);
-    background: rgba(7,20,20,0.55);
-    color: var(--gray-light);
-    border-radius: 999px;
-    padding: 6px 10px;
-    font-size: 11px;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-  }
-  .fuel-legend-btn.active {
-    color: #fff;
-    border-color: rgba(33,234,237,0.6);
-    box-shadow: 0 0 12px rgba(33,234,237,0.18);
-  }
-  .fuel-legend-dot {
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    box-shadow: 0 0 8px currentColor;
-    flex: 0 0 auto;
   }
 
 
@@ -783,10 +739,10 @@ function renderOverview() {
       </div>
       <div class="summary-stack">
         <div class="hero-card fuel-visual-card">
-          <div class="fuel-viz-wrap" aria-label="TRISO-X particle structure image">
-            <img class="fuel-static-img" src="triso-structure.svg" alt="TRISO-X multi-layer particle with labeled kernel, buffer, inner pyrolytic carbon, silicon carbide, and outer pyrolytic carbon layers" />
+          <div class="fuel-viz-wrap" aria-label="TRISO-X particle structure cross-section">
+            <img class="fuel-static-img" src="TRISO_fuel_cross_section.png" alt="TRISO-X Advanced Fuel Technology: Multi-layer pebble and particle structure showing fuel pebble, UCO/UO2 kernel, inner pyrolytic carbon, silicon carbide pressure vessel, and outer pyrolytic carbon layers" />
           </div>
-          <p class="fuel-viz-caption">Static TRISO-X structure reference image showing the fuel kernel and containment layers.</p>
+          <p class="fuel-viz-caption">TRISO-X advanced fuel technology — multi-layer pebble (~60 mm) and particle cross-section showing UCO kernel, IPyC, SiC pressure vessel, and OPyC containment layers.</p>
         </div>
       </div>
     </div>
@@ -862,26 +818,6 @@ function renderSources() {
   <div class="source-grid">${cards}</div>`;
 }
 
-const FUEL_LAYER_COLORS = ['#ff5f42', '#ffb347', '#44d1c5', '#5aa6ff', '#8a7dff'];
-let activeFuelLayer = -1;
-
-function initFuelLegend() {
-  const buttons = Array.from(document.querySelectorAll('.fuel-legend-btn'));
-  if (!buttons.length) return;
-  buttons.forEach((btn) => {
-    const idx = Number(btn.dataset.layer);
-    btn.classList.toggle('active', idx === activeFuelLayer);
-    btn.onclick = () => {
-      activeFuelLayer = activeFuelLayer === idx ? -1 : idx;
-      initFuelLegend();
-    };
-  });
-}
-
-function layerAlpha(idx, dim = 0.2) {
-  return activeFuelLayer === -1 || activeFuelLayer === idx ? 1 : dim;
-}
-
 function renderAll() {
   document.getElementById('tab-0').innerHTML = renderOverview();
   document.getElementById('tab-1').innerHTML = renderReadiness();
@@ -896,7 +832,6 @@ function renderAll() {
     </div>
     ${tableHTML(DATA)}`;
 
-  initFuelLegend();
   requestAnimationFrame(() => animateGauges());
 }
 
@@ -925,329 +860,6 @@ function animateGauges() {
 }
 
 
-
-let fuelVizRuntime = null;
-let threeLoaderPromise = null;
-
-function loadScriptOnce(src) {
-  return new Promise((resolve, reject) => {
-    const existing = document.querySelector(`script[data-src="${src}"]`);
-    if (existing) {
-      if (existing.dataset.loaded === 'true') { resolve(); return; }
-      existing.addEventListener('load', () => resolve(), { once: true });
-      existing.addEventListener('error', () => reject(new Error(`Failed to load ${src}`)), { once: true });
-      return;
-    }
-    const script = document.createElement('script');
-    script.src = src;
-    script.async = true;
-    script.defer = true;
-    script.dataset.src = src;
-    script.onload = () => { script.dataset.loaded = 'true'; resolve(); };
-    script.onerror = () => reject(new Error(`Failed to load ${src}`));
-    document.head.appendChild(script);
-  });
-}
-
-function ensureThreeLoaded() {
-  if (window.THREE) return Promise.resolve(window.THREE);
-  if (threeLoaderPromise) return threeLoaderPromise;
-
-  const sources = [
-    'https://unpkg.com/three@0.161.0/build/three.min.js',
-    'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.min.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/three.js/r161/three.min.js'
-  ];
-
-  threeLoaderPromise = (async () => {
-    for (const src of sources) {
-      try {
-        await loadScriptOnce(src);
-        if (window.THREE) return window.THREE;
-      } catch (err) {
-        // try next CDN mirror
-      }
-    }
-    throw new Error('Unable to load Three.js from CDN mirrors.');
-  })();
-
-  return threeLoaderPromise;
-}
-
-function renderFallbackFuelViz(mount) {
-  mount.innerHTML = '';
-  const canvas = document.createElement('canvas');
-  canvas.style.width = '100%';
-  canvas.style.height = '100%';
-  canvas.style.display = 'block';
-  mount.appendChild(canvas);
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-
-  let yaw = 0.45;
-  let pitch = -0.12;
-  let dragging = false;
-  let lx = 0;
-  let ly = 0;
-
-  function resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const w = Math.max(1, mount.clientWidth);
-    const h = Math.max(1, mount.clientHeight);
-    canvas.width = Math.floor(w * dpr);
-    canvas.height = Math.floor(h * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  }
-
-  const rings = [
-    { r: 0.80, c: '#8a7dff', edge: 'rgba(190,178,255,0.36)' },
-    { r: 0.66, c: '#5aa6ff', edge: 'rgba(155,202,255,0.34)' },
-    { r: 0.53, c: '#44d1c5', edge: 'rgba(125,235,227,0.32)' },
-    { r: 0.40, c: '#ffb347', edge: 'rgba(255,202,126,0.32)' },
-    { r: 0.27, c: '#ff5f42', edge: 'rgba(255,135,116,0.38)' }
-  ];
-
-  function draw() {
-    const w = mount.clientWidth;
-    const h = mount.clientHeight;
-    const cx = w * (0.33 + Math.sin(yaw) * 0.02);
-    const cy = h * (0.51 + Math.sin(pitch) * 0.02);
-    const base = Math.min(w, h) * 0.43;
-    const squash = 0.82 + Math.cos(pitch) * 0.12;
-
-    ctx.clearRect(0, 0, w, h);
-
-    const glow = ctx.createRadialGradient(cx - base * 0.36, cy - base * 0.4, 1, cx, cy, base * 1.5);
-    glow.addColorStop(0, 'rgba(255,255,255,0.42)');
-    glow.addColorStop(0.45, 'rgba(33,234,237,0.18)');
-    glow.addColorStop(1, 'rgba(5,15,15,0.04)');
-    ctx.fillStyle = glow;
-    ctx.fillRect(0, 0, w, h);
-
-    const cut = 0.48 + Math.sin(yaw) * 0.16;
-    rings.forEach((ring, i) => {
-      const alpha = layerAlpha(4 - i, 0.16);
-      const rx = base * ring.r;
-      const ry = rx * squash;
-      const xShift = Math.sin(yaw * 0.9) * (i * 1.5);
-
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.beginPath();
-      ctx.rect(cx - rx * cut, cy - ry - 5, rx * (1 + cut), ry * 2 + 10);
-      ctx.clip();
-      ctx.beginPath();
-      ctx.ellipse(cx + xShift, cy, rx, ry, 0, 0, Math.PI * 2);
-      const g = ctx.createRadialGradient(cx - rx * 0.35, cy - ry * 0.35, 1, cx, cy, rx);
-      g.addColorStop(0, ring.c + 'ff');
-      g.addColorStop(1, ring.c + (i === 0 ? '80' : '45'));
-      ctx.fillStyle = g;
-      ctx.fill();
-      ctx.strokeStyle = ring.edge;
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      ctx.restore();
-    });
-
-    ctx.strokeStyle = 'rgba(230,240,250,0.65)';
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.arc(cx, cy, base * 0.8, -0.85 + yaw * 0.08, 2.3 + yaw * 0.08);
-    ctx.stroke();
-
-    yaw += dragging ? 0 : 0.004;
-    fuelVizRuntime.raf = requestAnimationFrame(draw);
-  }
-
-  const onDown = (e) => {
-    dragging = true;
-    lx = e.clientX;
-    ly = e.clientY;
-  };
-  const onMove = (e) => {
-    if (!dragging) return;
-    yaw += (e.clientX - lx) * 0.009;
-    pitch += (e.clientY - ly) * 0.008;
-    pitch = Math.max(-1, Math.min(1, pitch));
-    lx = e.clientX;
-    ly = e.clientY;
-  };
-  const onUp = () => { dragging = false; };
-
-  resize();
-  mount.addEventListener('pointerdown', onDown);
-  window.addEventListener('pointermove', onMove);
-  window.addEventListener('pointerup', onUp);
-  window.addEventListener('resize', resize);
-
-  fuelVizRuntime = {
-    raf: 0,
-    cleanup: () => {
-      window.removeEventListener('resize', resize);
-      mount.removeEventListener('pointerdown', onDown);
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-      if (fuelVizRuntime?.raf) cancelAnimationFrame(fuelVizRuntime.raf);
-    }
-  };
-  draw();
-}
-
-function initFuelVisualization() {
-  const mount = document.getElementById('fuel-viz');
-  if (!mount) {
-    if (fuelVizRuntime?.raf) cancelAnimationFrame(fuelVizRuntime.raf);
-    if (fuelVizRuntime?.cleanup) fuelVizRuntime.cleanup();
-    fuelVizRuntime = null;
-    return;
-  }
-
-  if (fuelVizRuntime?.raf) cancelAnimationFrame(fuelVizRuntime.raf);
-  if (fuelVizRuntime?.cleanup) fuelVizRuntime.cleanup();
-
-  if (!window.THREE) {
-    renderFallbackFuelViz(mount);
-    return;
-  }
-
-  try {
-    mount.innerHTML = '';
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-    camera.position.set(0, 0.4, 5.4);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    if ('outputColorSpace' in renderer) renderer.outputColorSpace = THREE.SRGBColorSpace;
-    if ('toneMapping' in renderer) renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.15;
-    renderer.domElement.style.width = '100%';
-    renderer.domElement.style.height = '100%';
-    renderer.domElement.style.display = 'block';
-    mount.appendChild(renderer.domElement);
-
-  scene.add(new THREE.AmbientLight(0x92a3b5, 0.55));
-  const key = new THREE.DirectionalLight(0xffffff, 1.35);
-  key.position.set(2.4, 2.2, 3.1);
-  scene.add(key);
-  const rim = new THREE.DirectionalLight(0x9bd3ff, 0.85);
-  rim.position.set(-2.8, -0.2, -3.2);
-  scene.add(rim);
-  const glow = new THREE.PointLight(0x22d3ee, 0.85, 12);
-  glow.position.set(-1.9, 1.1, 2.3);
-  scene.add(glow);
-
-  const particle = new THREE.Group();
-  scene.add(particle);
-
-  const layers = [
-    { key: 4, r: 0.82, color: 0x8a7dff, metalness: 0.58, roughness: 0.26 },
-    { key: 3, r: 0.67, color: 0x5aa6ff, metalness: 0.72, roughness: 0.22 },
-    { key: 2, r: 0.54, color: 0x44d1c5, metalness: 0.62, roughness: 0.28 },
-    { key: 1, r: 0.42, color: 0xffb347, metalness: 0.52, roughness: 0.38 },
-    { key: 0, r: 0.29, color: 0xff5f42, metalness: 0.2, roughness: 0.34 }
-  ];
-
-  layers.forEach((l, idx) => {
-    const phiStart = idx === 0 ? 0.42 : 0.55;
-    const phiLength = Math.PI * 1.58;
-    const geom = new THREE.SphereGeometry(l.r, 96, 96, phiStart, phiLength);
-    const mat = new THREE.MeshPhysicalMaterial({
-      color: l.color,
-      metalness: l.metalness,
-      roughness: l.roughness,
-      clearcoat: 1,
-      clearcoatRoughness: 0.14,
-      sheen: 0.35,
-      sheenColor: new THREE.Color(0xdbe4ed),
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 1
-    });
-    const mesh = new THREE.Mesh(geom, mat);
-    mesh.userData.layerKey = l.key;
-    particle.add(mesh);
-  });
-
-  const halo = new THREE.Mesh(
-    new THREE.TorusGeometry(1.02, 0.012, 20, 140),
-    new THREE.MeshBasicMaterial({ color: 0x21eaed, transparent: true, opacity: 0.35 })
-  );
-  halo.rotation.x = Math.PI * 0.5;
-  particle.add(halo);
-
-  let yaw = 0.65;
-  let pitch = -0.22;
-  let dragging = false;
-  let lx = 0;
-  let ly = 0;
-
-  function resize() {
-    const w = Math.max(1, mount.clientWidth);
-    const h = Math.max(1, mount.clientHeight);
-    renderer.setSize(w, h, false);
-    camera.aspect = w / h;
-    camera.updateProjectionMatrix();
-  }
-
-  function render() {
-    particle.rotation.y += (yaw - particle.rotation.y) * 0.08;
-    particle.rotation.x += (pitch - particle.rotation.x) * 0.08;
-    particle.rotation.z = Math.sin(performance.now() * 0.00045) * 0.06;
-    halo.rotation.z += 0.01;
-    particle.children.forEach((child) => {
-      if (!child.material || typeof child.userData.layerKey !== 'number') return;
-      const a = layerAlpha(child.userData.layerKey, 0.16);
-      child.material.opacity += (a - child.material.opacity) * 0.15;
-    });
-    yaw += 0.003;
-    fuelVizRuntime.raf = requestAnimationFrame(render);
-    renderer.render(scene, camera);
-  }
-
-  const onDown = (e) => {
-    dragging = true;
-    lx = e.clientX;
-    ly = e.clientY;
-  };
-  const onMove = (e) => {
-    if (!dragging) return;
-    yaw += (e.clientX - lx) * 0.008;
-    pitch += (e.clientY - ly) * 0.007;
-    pitch = Math.max(-1.2, Math.min(1.2, pitch));
-    lx = e.clientX;
-    ly = e.clientY;
-  };
-  const onUp = () => { dragging = false; };
-
-  mount.addEventListener('pointerdown', onDown);
-  window.addEventListener('pointermove', onMove);
-  window.addEventListener('pointerup', onUp);
-  window.addEventListener('resize', resize);
-
-  if (fuelVizRuntime?.raf) cancelAnimationFrame(fuelVizRuntime.raf);
-  if (fuelVizRuntime?.cleanup) fuelVizRuntime.cleanup();
-
-    fuelVizRuntime = {
-      raf: 0,
-      cleanup: () => {
-        mount.removeEventListener('pointerdown', onDown);
-        window.removeEventListener('pointermove', onMove);
-        window.removeEventListener('pointerup', onUp);
-        window.removeEventListener('resize', resize);
-        particle.children.forEach((child) => {
-          if (child.geometry) child.geometry.dispose();
-          if (child.material) child.material.dispose();
-        });
-        renderer.dispose();
-      }
-    };
-    resize();
-    render();
-  } catch (err) {
-    renderFallbackFuelViz(mount);
-  }
-}
 
 const observer = new MutationObserver(() => setTimeout(animateGauges, 50));
 document.querySelectorAll('.tab-panel').forEach(p => observer.observe(p, { attributes: true, attributeFilter: ['class'] }));
